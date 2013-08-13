@@ -17,3 +17,82 @@ Features:
 - Server forking (including db data) for contentious issues and niche communities.
 - Users might pay subscriptions, and vote for funding devs & paying server costs.
 - Modular code so votes can carry forward between changes.
+
+
+
+
+MVP:
+
+- lock out root
+
+- web service with form for a git pull, which can run some script as root
+    
+    could have a commit.json file, with a flag "runInstall.py"
+    But then to install from scratch, we have to run through entire git history install scripts
+    + worse, you can't just make a patch for some html if the last commit had runInstall flag set!
+    
+    how do debian packages update?? could we use that system?
+        - yes: the git repo contains all the info to build a local deb pkg
+            which can pull in dependencies, install stuff to /usr/bin etc
+            And it has a system of updating already installed pkgs.
+            -> exactly what I want.
+            
+            Initially this will mean an update to the html will mean stopping all services, updating pkgs, + starting again. But once I have seperate modules this will get fixed :-)
+
+    Still need ability to vote for action that runs root script, for maintenance.
+    Ideally we'd have preconfigured actions for every possible maintenance command, but
+    there's gonna be a lot of them...
+    so a quick back door ability is vital for quick repairs.
+    Warn that it must not be abused to make system configuration or code changes.
+    
+    
+$ cat >>~/.bashrc <<EOF
+DEBEMAIL="your.email.address@example.org"
+DEBFULLNAME="Firstname Lastname"
+export DEBEMAIL DEBFULLNAME
+EOF
+$ . ~/.bashrc
+
+    
+dh_make
+            Requires folder packagename-version/
+  --native (don't require a .orig.tar.gz archive)
+  --single (standard binary deb package)
+  --yes    (non-interactive, answers yes to all qs)
+  --copyright gpl, gpl2, mit etc
+
+rm -rf debian/*.ex debian/*.EX
+
+Files in debian/ still need lots of manual editing :-(
+    
+then run dpkg-buildpackage
+This builds the deb and sticks it in ..
+It is now ready to install:
+    dpkg -i blah.deb
+and to fix dependecies, then do this:
+    apt-get --yes --fix-broken install
+    
+    
+    
+git-buildpackage:
+  Description: Suite to help with Debian packages in Git repositories
+    This package contains the following tools:
+    * git-import-{dsc,dscs}: import existing Debian source packages into a git
+      repository
+    * git-import-orig: import a new upstream version into the git repository
+    * git-buildpackage: build a package out of a git repository, check for local
+      modifications and tag appropriately
+    * git-dch: generate Debian changelog entries from Git commit messages
+    * gbp-{pull,clone}: clone and pull from remote repos
+    * gbp-pq: manage debian/patches easily
+    * gbp-create-remote-repo: create remote repositories
+  Homepage: https://honk.sigxcpu.org/piki/projects/git-buildpackage/
+  
+  It supports Lintian, which checks deb packages for common errors
+  
+devscripts (deb) installs a load of useful tools
+ubuntu-dev-tools does the same
+
+http://joeyh.name/code/pristine-tar/ may also be useful
+
+git-annex for files too big for git? eg big downloads we want to host??
