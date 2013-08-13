@@ -16,7 +16,7 @@ Features:
 - Delegative democracy so non-devs can use it, + you can say "Auto vote for changes that both Bob & Emily vote for".
 - Server forking (including db data) for contentious issues and niche communities.
 - Users might pay subscriptions, and vote for funding devs & paying server costs.
-- Modular code so votes can carry forward between changes.
+- Modular code so votes can carry forward between changes + you can say "Auto vote for changes to 'webmail' that Dave votes for"
 
 
 
@@ -80,8 +80,9 @@ How would it work for someone just forking some html????
     - After the change has been approved by vote, maybe the daemon could
         auto update the debian files, and push a new version back to github???
         This 2nd version could record things like #votes per proposal etc
-        Debian files might have to be template-ized
+        Debian files might have to be template-ized - actually that's probably the wrong thing to do
         With 2 seperate trees, we'd avoid having 2 commits
+        git-buildpackage can probably help here
 OK, but how do we do daemon modules?
     Is there a way of telling debian certain packages need to be obtained with
     a custom tool?
