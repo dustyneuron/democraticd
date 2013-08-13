@@ -1,0 +1,19 @@
+Democracy + open source + server
+= A democratic daemon
+
+You install the democratic daemon on your server, and it immediately kicks you off the system.
+It changes the root password, closes down ttys and sshd and removes
+them from the startup process.
+It starts a web service providing the only way to make changes to the system:
+Users sign up, and can propose code changes (git pull/patch) which a majority of users must vote for before the live code is updated. This is the only way to change the system.
+
+You are now running an open-source democratic internet service, enforced by the democratic daemon.
+Want to run a mail server, change the voting rules, or just the font on the front page?
+Submit a code change!
+All live code is pushed to an off-server repository in case of catastrophic failure.
+
+Features:
+- Delegative democracy so non-devs can use it, + you can say "Auto vote for changes that both Bob & Emily vote for".
+- Server forking (including db data) for contentious issues and niche communities.
+- Users might pay subscriptions, and vote for funding devs & paying server costs.
+- Modular code so votes can carry forward between changes.
