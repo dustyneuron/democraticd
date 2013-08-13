@@ -73,6 +73,26 @@ and to fix dependecies, then do this:
     apt-get --yes --fix-broken install
     
     
+So that's how we can install std debian packages on the target.
+But we also need to install democratic demon modules from source!
+maybe we could host a debian repository for them??
+How would it work for someone just forking some html????
+    - After the change has been approved by vote, maybe the daemon could
+        auto update the debian files, and push a new version back to github???
+        This 2nd version could record things like #votes per proposal etc
+        Debian files might have to be template-ized
+        With 2 seperate trees, we'd avoid having 2 commits
+OK, but how do we do daemon modules?
+    Is there a way of telling debian certain packages need to be obtained with
+    a custom tool?
+    Just run a local deb repository! We only need to build + "host" the debs
+    once a module has been voted on, so we can trigger that ourselves! YES!
+    
+Updating locally-built debs:
+    Have to update the files in debian / like changlog and version number
+    A tool called uupdate can do this (http://www.debian.org/doc/manuals/maint-guide/update.en.html#inspectnewupstream)
+    I think 'uscan' can check + download new upstream versions if debian knows where they come from
+
     
 git-buildpackage:
   Description: Suite to help with Debian packages in Git repositories
