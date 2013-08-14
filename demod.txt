@@ -70,6 +70,7 @@ This builds the deb and sticks it in ..
 It is now ready to install:
     dpkg -i blah.deb
 and to fix dependecies, then do this:
+    export DEBIAN_FRONTEND=noninteractive
     apt-get --yes --fix-broken install
     
     
@@ -117,3 +118,13 @@ ubuntu-dev-tools does the same
 http://joeyh.name/code/pristine-tar/ may also be useful
 
 git-annex for files too big for git? eg big downloads we want to host??
+
+
+Configuration management
+-------------------------
+setting up networking, sshd, apache, nginx etc
+
+etckeepe ? chef? puppet? cfengine? none at all?
+
+Maybe a bash script inside the app's deb can do it all?
+
