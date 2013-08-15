@@ -16,36 +16,22 @@ class HostedGitError(Exception):
 
 class HostedGit:
     def __init__(self, username, password):
-        base_api = 'https://api.github.com'
-        self.api_calls = {
-            'notifications': {
-                'method':   'GET',
-                'url':      base_api + '/notifications',
-            },
-        }
-        self.api_urls = [d['url'] for d in self.api_calls.values()]
-        
+        self.base_url = 'https://api.github.com'        
         self.username = username
         self.password = password
-        self.repo_set = set([])
-        self.callback = None
         self.next_api_time = time.time()
                 
         print('GitHub username/password is ' + username + '/' + password)
         
-    def watch_repositories(self, repo_names, callback):
-        self.repo_set = set(repo_names)
-        self.callback = callback
-            
-    def api_call(self, api_call):
-        if api_call not in self.api_calls:
-            raise HostedGitError('No such api call ' + str(api_call))
-        
+    def api_notifications(self):
+        return self.api_call('GET', self.base_url + '/notifications')
+                    
+    def api_call(self, method, url):
         current_time = time.time()
         if self.next_api_time > current_time:
             time.sleep(long(self.next_api_time - current_time))
     
-        req = urllib.request.Request(url=self.api_calls[api_call]['url'], method=self.api_calls[api_call]['method'])
+        req = urllib.request.Request(url=url, method=method)
         auth = bytes.decode(base64.b64encode((self.username + ':' + self.password).encode()))
         req.add_header('Authorization', 'Basic %s' % auth)
         req.add_header('User-Agent', 'curl/7.29.0')
@@ -58,7 +44,6 @@ class HostedGit:
         except urllib.error.HTTPError as err:
             print(err.info())
             raise
-            
         if not result:
             raise HostedGitError('urllib request did not return a result')
         
