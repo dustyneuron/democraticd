@@ -62,8 +62,13 @@ class HostedGit:
             time.sleep(long(self.next_api_time - current_time))
     
         req = urllib.request.Request(url=self.api_calls[api_call]['url'], method=self.api_calls[api_call]['method'])
-        base64string = base64.b64encode((self.username + ':' + self.password).encode())
-        req.add_header("Authorization", "Basic %s" % base64string)
+        auth = bytes.decode(base64.b64encode((self.username + ':' + self.password).encode()))
+        req.add_header('Authorization', 'Basic %s' % auth)
+        req.add_header('User-Agent', 'curl/7.29.0')
+        req.add_header('Accept', '*/*')
+        print(req.headers)
+        print('\n')
+        
         try:
             result = urllib.request.urlopen(req)
         except urllib.error.HTTPError as err:
@@ -78,11 +83,12 @@ class HostedGit:
         if result.getheader('X-poll-interval'):
             self.next_api_time = time.time() + 2 * float(result.getheader('X-poll-interval'))
         
-        status = result.status
-        if status != 200 or status != 304:
+        status = int(result.getcode())
+        if (status == 200) or (status == 304):
+            return json.loads(result.read().decode('utf-8'))
+        else:
             raise HostedGitError('API HTTP error code ' + str(status))
-            
-        return json.loads(result.read())
+        
         
         
     def do_loop(self):
