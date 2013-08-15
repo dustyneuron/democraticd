@@ -2,6 +2,8 @@
 
 import json
 import urllib.request
+import urllib.error
+import base64
 import time
 
 class HostedGitError(Exception):
@@ -44,19 +46,7 @@ class HostedGit:
         self.repo_set = set([])
         self.callback = None
         self.next_api_time = time.time()
-        
-        self.password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-        self.password_mgr.add_password(realm='github.com',
-                                  uri=self.api_urls,
-                                  user=self.username,
-                                  passwd=self.password)
-
-        self.auth_handler = urllib.request.HTTPBasicAuthHandler(self.password_mgr)
-        
-        opener = urllib.request.build_opener(self.auth_handler)
-        # ...and install it globally so it can be used with urlopen.
-        urllib.request.install_opener(opener)
-        
+                
         print('GitHub username/password is ' + username + '/' + password)
         
     def watch_repositories(self, repo_names, callback):
@@ -72,11 +62,18 @@ class HostedGit:
             time.sleep(long(self.next_api_time - current_time))
     
         req = urllib.request.Request(url=self.api_calls[api_call]['url'], method=self.api_calls[api_call]['method'])
-        result = urllib.request.urlopen(req)
+        base64string = base64.b64encode((self.username + ':' + self.password).encode())
+        req.add_header("Authorization", "Basic %s" % base64string)
+        try:
+            result = urllib.request.urlopen(req)
+        except urllib.error.HTTPError as err:
+            print(err.info())
+            raise
+            
         if not result:
             raise HostedGitError('urllib request did not return a result')
         
-        print(result.getheaders())
+        print(result.info())
         
         if result.getheader('X-poll-interval'):
             self.next_api_time = time.time() + 2 * float(result.getheader('X-poll-interval'))

@@ -17,7 +17,7 @@ repos = module_set.union(package_set)
 hosted_git.watch_repositories(repos, handle_pull)
 
 
-hosted_git.api_call('notifications')
+data = hosted_git.api_call('notifications')
 
 
 
