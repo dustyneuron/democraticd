@@ -17,4 +17,19 @@ repos = module_set.union(package_set)
 hosted_git.watch_repositories(repos, handle_pull)
 
 
-hosted_git.api_call('GET', '/notifications')
+hosted_git.api_call('notifications')
+
+
+
+
+hosted_git.password_mgr.find_user_password(None, 'https://api.github.com/notifications')
+
+
+base_api = 'https://api.github.com'
+api_calls = {
+    'notifications': {
+        'method':   'GET',
+        'url':      base_api + '/notifications',
+    },
+}
+api_urls = [d['url'] for d in api_calls.values()]

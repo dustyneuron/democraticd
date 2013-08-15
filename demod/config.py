@@ -39,4 +39,4 @@ class Config:
     def create_hosted_git(self):
         with open(os.path.join(self.conf_dir, "hosted_git.json")) as f:
             config = json.loads(f.read())
-        return demod.hostedgit.HostedGit(config['username'], config['password'], config['cache_dir'])
+        return demod.hostedgit.HostedGit(config['username'], config['password'])
