@@ -1,0 +1,4 @@
+{
+    "modules": ["foo", "bar"],
+    "permissions or something": "root"
+}

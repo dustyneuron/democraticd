@@ -8,15 +8,15 @@ It starts a web service providing the only way to make changes to the system:
 Users sign up, and can propose code changes (git pull/patch) which a majority of users must vote for before the live code is updated. This is the only way to change the system.
 
 You are now running an open-source democratic internet service, enforced by the democratic daemon.
-Want to run a mail server, change the voting rules, or just the font on the front page?
+Want to set up mail forwarding, change the voting rules, or just the font on the front page?
 Submit a code change!
 All live code is pushed to an off-server repository in case of catastrophic failure.
 
 Features:
 - Delegative democracy so non-devs can use it, + you can say "Auto vote for changes that both Bob & Emily vote for".
-- Server forking (including db data) for contentious issues and niche communities.
+- Server forking + per-user db migration, for contentious issues and niche communities.
 - Users might pay subscriptions, and vote for funding devs & paying server costs.
-- Modular code so votes can carry forward between changes + you can say "Auto vote for changes to 'webmail' that Dave votes for"
+- Modular code so votes can carry forward between changes + you can say "Auto vote for changes to 'webforum' that Dave votes for"
 
 
 
@@ -72,6 +72,7 @@ It is now ready to install:
 and to fix dependecies, then do this:
     export DEBIAN_FRONTEND=noninteractive
     apt-get --yes --fix-broken install
+I think gdebi-core can do this all in one
     
     
 So that's how we can install std debian packages on the target.
@@ -126,5 +127,8 @@ setting up networking, sshd, apache, nginx etc
 
 etckeepe ? chef? puppet? cfengine? none at all?
 
-Maybe a bash script inside the app's deb can do it all?
+cfengine is lightweight enough (~3mb ram) to work on a 1gb VPS, whereas
+puppet and chef are pretty heavyweight.
+
+I think a config management tool is gonna be essential for server forking.
 
