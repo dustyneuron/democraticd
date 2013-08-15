@@ -2,6 +2,18 @@
 
 import demod.config
     
+class PullRequest:
+    def __init__(self, data):
+        self.repo_name = data['repository']['name']
+        self.title = data['subject']['title']
+        self.api_url = data['subject']['url']
+        
+    def fill_info(self, data):
+        self.pull_ref = data['head']['ref']
+        self.pull_sha = data['head']['sha']
+        self.pull_clone_url = data['head']['repo']['clone_url']
+
+
     
 def handle_pull(module_or_package_name, pull_request):
     print('handle_pull(module_or_package_name=' + module_or_package_name + ', pull_request)')
@@ -17,19 +29,23 @@ repos = module_set.union(package_set)
 hosted_git.watch_repositories(repos, handle_pull)
 
 
-data = hosted_git.api_call('notifications')
+notifications = hosted_git.api_call('notifications')
+
+import json
+with open('test/notifications.json') as f:
+    notifications = json.loads(f.read())
+    
+
+for n in notifications:
+    if n['subject']['type'] == 'PullRequest':
+        pr = PullRequest(n)
 
 
 
+# MVP: check for notifications, filter out pull requests,
+# new pull reqs -> save (in-memory) new proposals,
+# post a comment back
 
-hosted_git.password_mgr.find_user_password(None, 'https://api.github.com/notifications')
-
-
-base_api = 'https://api.github.com'
-api_calls = {
-    'notifications': {
-        'method':   'GET',
-        'url':      base_api + '/notifications',
-    },
-}
-api_urls = [d['url'] for d in api_calls.values()]
+# MVP 2:
+# download new pulls into local git repo
+# merge + push back to github

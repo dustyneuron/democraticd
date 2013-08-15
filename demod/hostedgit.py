@@ -12,23 +12,7 @@ class HostedGitError(Exception):
     
     def __str__(self):
         return repr.repr(self.value)
-    
-
-class PullRequest:
-    def __init__(self, repo_name, github_data):
-        if not github_data.mergeable:
-            raise HostedGitError('Pull request ' + github_data['url']
-                + ' marked not mergeable')
-            
-        self.repo_name = repo_name
-        self.title = github_data['title']
-        self.description = github_data['body']
-        self.pull = {}
-        self.pull.ref = github_data['head']['ref']
-        self.pull.sha = github_data['head']['sha']
-        self.pull.clone_url = github_data['head']['repo']['clone_url']
-
-
+        
 
 class HostedGit:
     def __init__(self, username, password):
@@ -66,8 +50,8 @@ class HostedGit:
         req.add_header('Authorization', 'Basic %s' % auth)
         req.add_header('User-Agent', 'curl/7.29.0')
         req.add_header('Accept', '*/*')
-        print(req.headers)
-        print('\n')
+        #print(req.headers)
+        #print('\n')
         
         try:
             result = urllib.request.urlopen(req)
@@ -80,8 +64,10 @@ class HostedGit:
         
         print(result.info())
         
-        if result.getheader('X-poll-interval'):
-            self.next_api_time = time.time() + 2 * float(result.getheader('X-poll-interval'))
+        if result.info().get('X-poll-interval'):
+            time_to_wait = 2 * float(result.info().get('X-poll-interval'))
+            self.next_api_time = time.time() + time_to_wait
+            print('Will wait ' + str(time_to_wait) + ' secs before next api call')
         
         status = int(result.getcode())
         if (status == 200) or (status == 304):
