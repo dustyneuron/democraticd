@@ -19,19 +19,14 @@ class HostedGit:
         self.base_url = 'https://api.github.com'        
         self.username = username
         self.password = password
-        self.next_api_time = time.time()
+        self.next_notify_time = time.time()
                 
         print('GitHub username/password is ' + username + '/' + password)
         
-    def api_notifications(self):
-        return self.api_call('GET', self.base_url + '/notifications')
-                    
-    def api_call(self, method, url):
-        current_time = time.time()
-        if self.next_api_time > current_time:
-            time.sleep(long(self.next_api_time - current_time))
-    
-        req = urllib.request.Request(url=url, method=method)
+    def _api_call(self, method, url):
+        print('_api_call(' + method + ', ' + url + ')')
+        
+        req = urllib.request.Request(url=self.base_url + url, method=method)
         auth = bytes.decode(base64.b64encode((self.username + ':' + self.password).encode()))
         req.add_header('Authorization', 'Basic %s' % auth)
         req.add_header('User-Agent', 'curl/7.29.0')
@@ -47,23 +42,27 @@ class HostedGit:
         if not result:
             raise HostedGitError('urllib request did not return a result')
         
-        print(result.info())
+        #print(result.info())
+        return result
+        
+    def api_call(self, method, url):
+        result = self._api_call(method, url)
+        return json.loads(result.read().decode('utf-8'))
+
+    def api_notifications(self):
+        current_time = time.time()
+        if self.next_notify_time > current_time:
+            time.sleep(long(self.next_notify_time - current_time))
+    
+        result = self._api_call('GET', '/notifications')
         
         if result.info().get('X-poll-interval'):
             time_to_wait = 2 * float(result.info().get('X-poll-interval'))
-            self.next_api_time = time.time() + time_to_wait
-            print('Will wait ' + str(time_to_wait) + ' secs before next api call')
+            self.next_notify_time = time.time() + time_to_wait
+            print('Will wait ' + str(time_to_wait) + ' secs before next notify call')
         
-        status = int(result.getcode())
-        if (status == 200) or (status == 304):
-            return json.loads(result.read().decode('utf-8'))
-        else:
-            raise HostedGitError('API HTTP error code ' + str(status))
+        return json.loads(result.read().decode('utf-8'))
         
+    def api_list_pull_requests(self, repo):
+        return self.api_call('GET', '/repos/' + self.username + '/' + repo + '/pulls')
         
-        
-    def do_loop(self):
-        while True:
-            # do api poll!
-            data = self.api_call('GET', '/notifications')
-            
