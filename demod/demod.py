@@ -24,6 +24,42 @@ class PullRequest:
         self.repo_api_url = data['head']['repo']['url']
         self.filled = True
 
+def create_pull_requests(notifications):
+    pull_requests = []
+    pr_repos = set([])
+    for n in notifications:
+        if n['subject']['type'] == 'PullRequest':
+            pr = PullRequest(n)
+            if pr.repo in package_set:
+                pr.repo_type = 'package'
+            elif pr.repo in module_set:
+                pr.repo_type = 'module'
+            else:
+                print('Ignoring pull request for non-daemon repository "' + pr.repo + '"')
+                pr = None
+                
+            if pr:
+                pr_repos.add(pr.repo)
+                pull_requests.append(pr)
+                
+    class CreatedObjects:
+        pass
+        
+    result = CreatedObjects()
+    result.pull_requests = pull_requests
+    result.pr_repos = pr_repos
+    return result
+
+
+def fill_pull_requests(hosted_git, objects):
+    for repo in objects.pr_repos:
+        list_pull_requests = hosted_git.api_list_pull_requests(repo)
+        for pr in objects.pull_requests:
+            if not pr.filled:
+                for full_pr in list_pull_requests:
+                    if pr.pull_api_url == full_pr['url']:
+                        pr.fill(full_pr)
+                        break
 
 
 config = demod.config.Config()
@@ -36,40 +72,14 @@ repos = module_set.union(package_set)
 
 
 #notifications = hosted_git.api_notifications()
-
 import json
 with open('test/notifications.json') as f:
     notifications = json.loads(f.read())
 
-
-pull_requests = []
-pr_repos = set([])
-for n in notifications:
-    if n['subject']['type'] == 'PullRequest':
-        pr = PullRequest(n)
-        if pr.repo in package_set:
-            pr.repo_type = 'package'
-        elif pr.repo in module_set:
-            pr.repo_type = 'module'
-        else:
-            print('Ignoring pull request for non-daemon repository "' + pr.repo + '"')
-            pr = None
-            
-        if pr:
-            pr_repos.add(pr.repo)
-            pull_requests.append(pr)
-            
-
-for repo in pr_repos:
-    list_pull_requests = hosted_git.api_list_pull_requests(repo)
-    for pr in pull_requests:
-        if not pr.filled:
-            for full_pr in list_pull_requests:
-                if pr.pull_api_url == full_pr['url']:
-                    pr.fill(full_pr)
-                    break
-                    
-
+                
+objects = create_pull_requests(notifications)
+                
+fill_pull_requests(hosted_git, objects)
 
 
 # MVP: check for notifications, filter out pull requests,
