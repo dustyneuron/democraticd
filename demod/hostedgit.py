@@ -41,7 +41,7 @@ class HostedGit:
         self.http.add_credentials(username, password, 'api.github.com')
         
     def watch_repositories(self, repo_names, callback):
-        self.repo_set = set(repo_names)})
+        self.repo_set = set(repo_names)
         self.callback = callback
             
     def api_call(self, action, path):
@@ -52,18 +52,19 @@ class HostedGit:
         url = 'https://api.github.com' + path
         
         r, content = self.http.request(url, method=action)
-        if r and ('x-poll-interval' in r):
+        if not r or not content:
+            raise HostedGitError('httplib2 request did not return a request, content tuple')
+            
+        if 'x-poll-interval' in r:
             self.next_api_time = time.time() + float(r['x-poll-interval'])
         
         status = int(r['status'])
         if status != 200 or status != 304:
-                print(r['status'])
-                print(r['content-type'])
-                quit()
-
+            raise HostedGitError('API HTTP error code ' + status)
+            
         return json.loads(content)
         
-
+        
     def do_loop(self):
         while True:
             # do api poll!

@@ -2,7 +2,7 @@
 
 import os
 import json
-import hostedgit
+import demod.hostedgit
 
 
 class DemodConfig:
@@ -39,7 +39,7 @@ class DemodConfig:
     def create_hosted_git(self):
         with open(os.path.join(self.conf_dir, "hosted_git.json")) as f:
             config = json.loads(f.read())
-        return hostedgit.HostedGit(config.username, config.password, config.cache_dir)
+        return demod.hostedgit.HostedGit(config.username, config.password, config.cache_dir)
     
     
 def handle_pull(module_or_package_name, pull_request):
