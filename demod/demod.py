@@ -71,10 +71,10 @@ hosted_git = config.create_hosted_git()
 repos = module_set.union(package_set)
 
 
-#notifications = hosted_git.api_notifications()
-import json
-with open('test/notifications.json') as f:
-    notifications = json.loads(f.read())
+notifications = hosted_git.api_notifications()
+#import json
+#with open('test/notifications.json') as f:
+#    notifications = json.loads(f.read())
 
                 
 objects = create_pull_requests(notifications)
