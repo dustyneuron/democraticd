@@ -1,9 +1,14 @@
 #!/usr/bin/env python3.3
 
+import demod.utils
+
 import json
 import urllib3
 import base64
 import time
+import datetime
+import dateutil.parser
+
 
 class HostedGitError(Exception):
     def __init__(self, value):
@@ -14,35 +19,42 @@ class HostedGitError(Exception):
         
 
 class HostedGit:
+    json_methods = set(['PUT', 'POST'])
+    base_url = 'api.github.com'
+    
     def __init__(self, username, password):
-        self.base_url = 'api.github.com'        
         self.username = username
         self.password = password
         self.next_notify_time = time.time()
+        self.notify_poll_interval = 0
         self.last_modified = {}
         self.conn_pool = None
         
-    def _api_call(self, url, method='GET', headers={}):
+    def _api_call(self, url, method='GET', fields=None, headers={}):
         print('_api_call(' + method + ', ' + url + ')')
         
         auth = bytes.decode(base64.b64encode((self.username + ':' + self.password).encode()))
         headers['Authorization'] = 'Basic %s' % auth
-        headers['User-Agent'] = 'democraticd (https://github.com/dustyneuron/democraticd)'
+        headers['User-Agent'] = 'democraticd (mailto:demod@dustyneuron.com)'
         headers['Accept'] = '*/*'
         last_modified_key = method + ' ' + url
         if last_modified_key in self.last_modified:
             headers['If-Modified-Since'] = self.last_modified[last_modified_key]
+        if fields and (method in self.json_methods):
+            headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                
         print(headers)
-        print('\n')
+        if fields:
+            print(fields)
 
         if not self.conn_pool:
             self.conn_pool = urllib3.HTTPSConnectionPool(self.base_url, maxsize=1)
         
-        try:
-            result = self.conn_pool.request(method, url, headers=headers)
-        except urllib.error.HTTPError as err:
-            print(err.headers)
-            raise
+        if method in self.json_methods:
+            result = self.conn_pool.urlopen(method, url, headers=headers, body=json.dumps(fields))
+        else:
+            result = self.conn_pool.request_encode_url(method, url, headers=headers, fields=fields)
+                
         if not result:
             raise HostedGitError('urllib request did not return a result')
             
@@ -69,12 +81,22 @@ class HostedGit:
             time.sleep(sleep_time)
             
         result = self._api_call('/notifications')
+        if result.headers.get('last-modified'):
+            last_modified = dateutil.parser.parse(result.headers.get('last-modified'))
+            # GitHub API is broken and thinks GMT == UTC
+            last_modified = last_modified.replace(tzinfo=None)
                 
         if result.headers.get('x-poll-interval'):
-            time_to_wait = float(result.headers.get('x-poll-interval'))
-            self.next_notify_time = time.time() + time_to_wait
+            self.notify_poll_interval = float(result.headers.get('x-poll-interval'))
+        self.next_notify_time = time.time() + self.notify_poll_interval
         
-        return self._return_json(result)
+        n_list = self._return_json(result)
+        if n_list:
+            last_read_at = demod.utils.iso_8601(last_modified)
+            result = self._api_call('/notifications', 'PUT', fields={'last_read_at': last_read_at})
+            if result.status != 205:
+                raise HostedGitError(str(result.status) + result.reason)
+        return n_list
         
     def api_list_pull_requests(self, repo):
         result = self._api_call('/repos/' + self.username + '/' + repo + '/pulls')
