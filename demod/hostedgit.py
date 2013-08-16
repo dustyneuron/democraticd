@@ -40,7 +40,7 @@ class HostedGit:
         last_modified_key = method + ' ' + url
         if last_modified_key in self.last_modified:
             headers['If-Modified-Since'] = self.last_modified[last_modified_key]
-        if fields and (method in self.json_methods):
+        if (fields != None) and (method in self.json_methods):
             headers['Content-Type'] = 'application/x-www-form-urlencoded'
                 
         print(headers)
@@ -51,7 +51,10 @@ class HostedGit:
             self.conn_pool = urllib3.HTTPSConnectionPool(self.base_url, maxsize=1)
         
         if method in self.json_methods:
-            result = self.conn_pool.urlopen(method, url, headers=headers, body=json.dumps(fields))
+            body=None
+            if fields:
+                body=json.dumps(fields)
+            result = self.conn_pool.urlopen(method, url, headers=headers, body=body)
         else:
             result = self.conn_pool.request_encode_url(method, url, headers=headers, fields=fields)
                 
@@ -85,6 +88,7 @@ class HostedGit:
             last_modified = dateutil.parser.parse(result.headers.get('last-modified'))
             # GitHub API is broken and thinks GMT == UTC
             last_modified = last_modified.replace(tzinfo=None)
+            last_modified = last_modified + datetime.timedelta(seconds=1)
                 
         if result.headers.get('x-poll-interval'):
             self.notify_poll_interval = float(result.headers.get('x-poll-interval'))
