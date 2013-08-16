@@ -20,8 +20,6 @@ class HostedGit:
         self.username = username
         self.password = password
         self.next_notify_time = time.time()
-                
-        print('GitHub username/password is ' + username + '/' + password)
         
     def _api_call(self, method, url):
         print('_api_call(' + method + ', ' + url + ')')
@@ -45,9 +43,11 @@ class HostedGit:
         #print(result.info())
         return result
         
-    def api_call(self, method, url):
-        result = self._api_call(method, url)
-        return json.loads(result.read().decode('utf-8'))
+    def _parse_json(self, json_data):
+        data = json.loads(json_data.decode('utf-8'))
+        if len(data) >= 30:
+            raise HostedGitError('TODO: implement pagination')
+        return data
 
     def api_notifications(self):
         current_time = time.time()
@@ -61,8 +61,9 @@ class HostedGit:
             self.next_notify_time = time.time() + time_to_wait
             print('Will wait ' + str(time_to_wait) + ' secs before next notify call')
         
-        return json.loads(result.read().decode('utf-8'))
+        return self._parse_json(result.read())
         
     def api_list_pull_requests(self, repo):
-        return self.api_call('GET', '/repos/' + self.username + '/' + repo + '/pulls')
+        result = self._api_call('GET', '/repos/' + self.username + '/' + repo + '/pulls')
+        return self._parse_json(result.read())
         
