@@ -71,7 +71,6 @@ class HostedGit:
         if result.status == 304:
             return []
         data = json.loads(result.data.decode('utf-8'))
-        result.release_conn()
         if len(data) >= 30:
             raise HostedGitError('TODO: implement pagination')
         return data
@@ -100,24 +99,28 @@ class HostedGit:
             result = self._api_call('/notifications', 'PUT', fields={'last_read_at': last_read_at})
             if result.status != 205:
                 raise HostedGitError(str(result.status) + result.reason)
+            result.release_conn()
                 
         return n_list
         
     def list_pull_requests(self, repo):
         result = self._api_call('/repos/' + self.username + '/' + repo + '/pulls')
-        return self._return_json(result)
+        data = self._return_json(result)
+        result.release_conn()
+        return data
         
     def create_pull_request_comment(self, pull_request):
         url = ( '/repos/' + self.username + '/' + pull_request.repo +
-                '/issues/' + str(pull_request.issue_id) + '/comments'
+                '/issues/' + str(pull_request.issue_id) + '/comments')
                 
         comment = ( "The democratic daemon thanks you for your contribution!\n"
                     "Your change request is now up for voting - "
                     "vote for it at [" + pull_request.vote_url + "](" + pull_request.vote_url + ")")
-                
+        
         result = self._api_call(url, 'POST', fields={'body': comment})
         if result.status != 201:
             raise Exception(str(result.status) + result.reason)
-        
+        pull_request.set_comment_log(self._return_json(result))
+        result.release_conn()
         
         

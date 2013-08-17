@@ -5,11 +5,23 @@ import demod.config
 import functools
     
 class PullRequest:
-    def __init__(self, data):
-        self.repo = data['repository']['name']
-        self.title = data['subject']['title']
-        self.pull_api_url = data['subject']['url']
-        self.repo_type = None
+    state_EMPTY = 0
+    state_NEW = 1
+    state_FILLED = 2
+    state_COMMENTED = 3
+    
+    def __init__(self):
+        pass
+        
+    def __init__(self, data=None):
+        if data:
+            self.repo = data['repository']['name']
+            self.title = data['subject']['title']
+            self.pull_api_url = data['subject']['url']
+            self.repo_type = None
+            self.status = self.state_NEW
+        else:
+            self.status = self.state_EMPTY
         
     def fill(self, data):
         if data['base']['repo']['name'] != self.repo:
@@ -23,9 +35,17 @@ class PullRequest:
         self.base_sha = data['base']['sha']
         self.repo_git_url = data['head']['repo']['clone_url']
         self.repo_api_url = data['head']['repo']['url']
+        self.status = self.state_FILLED
         
     def set_vote_url(self):
         self.vote_url = 'http://someurl.com/vote/' + self.repo + '/' + str(self.issue_id) + '/'
+        
+    def set_comment_log(self, data):
+        self.comment_id = data['id']
+        self.comment_api_url = data['url']
+        self.comment_body = data['body']
+        self.status = self.state_COMMENTED
+        
 
 def create_pull_requests(notifications, package_set, module_set):
     repo_dict = {}
@@ -81,6 +101,13 @@ hosted_git = config.create_hosted_git()
 
 repo_dict = get_new_pull_requests(config, hosted_git)
 
+for (repo, pr_list) in repo_dict.items():
+    config.write_pull_requests(repo, pr_list)
+    
+repo_dict = {'democraticd':None}
+for repo in repo_dict.keys():
+    repo_dict[repo] = config.read_pull_requests(repo, PullRequest)
+
 for pr in functools.reduce(lambda acc, x: acc + x, repo_dict.values()):
     print('PR #' + str(pr.issue_id) + ': ' + pr.title)
     # Would interact with db at this point, the vote url needs to be live
@@ -88,7 +115,17 @@ for pr in functools.reduce(lambda acc, x: acc + x, repo_dict.values()):
     hosted_git.create_pull_request_comment(pr)
 
 # MVP:
-# some manual alternative to voting
+# Is there a non-web UI that makes sense? eg for a single dev
+# doing core work...
+#
+# single-dev workflow: "-s --standalone"
+# do a github pull,
+# daemon picks up on it, saves it to a config file in case daemon dies,
+# and comments 'run $ demod approve 3'kl
+# Dev runs this command, and the daemon merges, installs, + pushes back
+# to github
+#
+##
 #
 # download new pulls into local git repo
 # merge, install + push back to github

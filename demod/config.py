@@ -1,14 +1,16 @@
 #!/usr/bin/env python3.3
 
+import demod.hostedgit
+
 import os
 import json
-import demod.hostedgit
 
 
 class Config:
     def __init__(self):
         self.conf_dir = "/home/tom/.demod/"
         self.packages_dir = os.path.join(self.conf_dir, "packages")
+        self.pull_requests_dir = os.path.join(self.conf_dir, "pull-requests")
         self.json_extension = ".json"
         
     def get_package_set(self):
@@ -40,3 +42,28 @@ class Config:
         with open(os.path.join(self.conf_dir, "hosted_git.json")) as f:
             config = json.loads(f.read())
         return demod.hostedgit.HostedGit(config['username'], config['password'])
+
+    def read_pull_requests(self, repo, pr_class_type):
+        filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)
+        pr_list = []
+        with open(filename) as f:
+            data = json.loads(f.read())
+        for (issue_id, d) in data.items():
+            pr = pr_class_type()
+            for (k, v) in d.items():
+                pr.__dict__[k] = v
+            pr_list.append(pr)
+            
+        return pr_list
+
+    def write_pull_requests(self, repo, pr_list):
+        filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)
+        data = {}
+        for pr in pr_list:
+            data[pr.issue_id] = vars(pr)
+            
+        with open(filename, mode='w') as f:
+            f.write(json.dumps(data, sort_keys=True, indent=4))
+        
+
+
