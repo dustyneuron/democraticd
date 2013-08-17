@@ -15,7 +15,7 @@ class PullRequest:
         if data['base']['repo']['name'] != self.repo:
             raise Exception('Full pull request name does not match')
         
-        self.pull_id = data['number']
+        self.issue_id = data['number']
         self.description = data['body']
         self.ref = data['head']['ref']
         self.sha = data['head']['sha']
@@ -24,6 +24,8 @@ class PullRequest:
         self.repo_git_url = data['head']['repo']['clone_url']
         self.repo_api_url = data['head']['repo']['url']
         
+    def set_vote_url(self):
+        self.vote_url = 'http://someurl.com/vote/' + self.repo + '/' + str(self.issue_id) + '/'
 
 def create_pull_requests(notifications, package_set, module_set):
     repo_dict = {}
@@ -80,12 +82,16 @@ hosted_git = config.create_hosted_git()
 repo_dict = get_new_pull_requests(config, hosted_git)
 
 for pr in functools.reduce(lambda acc, x: acc + x, repo_dict.values()):
-    print('PR #' + str(pr.pull_id) + ': ' + pr.title)
+    print('PR #' + str(pr.issue_id) + ': ' + pr.title)
+    # Would interact with db at this point, the vote url needs to be live
+    pr.set_vote_url()
+    hosted_git.create_pull_request_comment(pr)
 
-# MVP: check for notifications, filter out pull requests,
-# new pull reqs -> save (in-memory) new proposals,
-# post a comment back
-
-# MVP 2:
+# MVP:
+# some manual alternative to voting
+#
 # download new pulls into local git repo
-# merge + push back to github
+# merge, install + push back to github
+
+
+

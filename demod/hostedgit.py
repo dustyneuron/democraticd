@@ -107,3 +107,17 @@ class HostedGit:
         result = self._api_call('/repos/' + self.username + '/' + repo + '/pulls')
         return self._return_json(result)
         
+    def create_pull_request_comment(self, pull_request):
+        url = ( '/repos/' + self.username + '/' + pull_request.repo +
+                '/issues/' + str(pull_request.issue_id) + '/comments'
+                
+        comment = ( "The democratic daemon thanks you for your contribution!\n"
+                    "Your change request is now up for voting - "
+                    "vote for it at [" + pull_request.vote_url + "](" + pull_request.vote_url + ")")
+                
+        result = self._api_call(url, 'POST', fields={'body': comment})
+        if result.status != 201:
+            raise Exception(str(result.status) + result.reason)
+        
+        
+        
