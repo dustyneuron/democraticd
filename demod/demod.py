@@ -2,7 +2,7 @@
 
 import demod.config
 
-import itertools
+import functools
     
 class PullRequest:
     def __init__(self, data):
@@ -10,7 +10,6 @@ class PullRequest:
         self.title = data['subject']['title']
         self.pull_api_url = data['subject']['url']
         self.repo_type = None
-        self.filled = False
         
     def fill(self, data):
         if data['base']['repo']['name'] != self.repo:
@@ -24,7 +23,7 @@ class PullRequest:
         self.base_sha = data['base']['sha']
         self.repo_git_url = data['head']['repo']['clone_url']
         self.repo_api_url = data['head']['repo']['url']
-        self.filled = True
+        
 
 def create_pull_requests(notifications, package_set, module_set):
     repo_dict = {}
@@ -51,11 +50,14 @@ def fill_pull_requests(hosted_git, repo_dict):
     for repo in repo_dict.keys():
         list_pull_requests = hosted_git.list_pull_requests(repo)
         for pr in repo_dict[repo]:
-            if not pr.filled:
-                for full_pr in list_pull_requests:
-                    if pr.pull_api_url == full_pr['url']:
-                        pr.fill(full_pr)
-                        break
+            filled = False
+            for full_pr in list_pull_requests:
+                if pr.pull_api_url == full_pr['url']:
+                    pr.fill(full_pr)
+                    filled = True
+                    break
+            if not filled:
+                raise Exception('No matching full pull request for ' + str(pr.pull_api_url))
 
 
 def get_new_pull_requests(config, hosted_git):
@@ -76,7 +78,8 @@ config = demod.config.Config()
 hosted_git = config.create_hosted_git()
 
 repo_dict = get_new_pull_requests(config, hosted_git)
-for pr in itertools.chain.from_iterable(repo_dict.values()):
+
+for pr in functools.reduce(lambda acc, x: acc + x, repo_dict.values()):
     print('PR #' + str(pr.pull_id) + ': ' + pr.title)
 
 # MVP: check for notifications, filter out pull requests,
