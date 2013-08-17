@@ -1,6 +1,8 @@
 #!/usr/bin/env python3.3
 
 import demod.config
+
+import itertools
     
 class PullRequest:
     def __init__(self, data):
@@ -24,9 +26,8 @@ class PullRequest:
         self.repo_api_url = data['head']['repo']['url']
         self.filled = True
 
-def create_pull_requests(notifications):
-    pull_requests = []
-    pr_repos = set([])
+def create_pull_requests(notifications, package_set, module_set):
+    repo_dict = {}
     for n in notifications:
         if n['subject']['type'] == 'PullRequest':
             pr = PullRequest(n)
@@ -39,22 +40,17 @@ def create_pull_requests(notifications):
                 pr = None
                 
             if pr:
-                pr_repos.add(pr.repo)
-                pull_requests.append(pr)
+                if pr.repo not in repo_dict:
+                    repo_dict[pr.repo] = []
+                repo_dict[pr.repo].append(pr)
                 
-    class CreatedObjects:
-        pass
-        
-    result = CreatedObjects()
-    result.pull_requests = pull_requests
-    result.pr_repos = pr_repos
-    return result
+    return repo_dict
 
 
-def fill_pull_requests(hosted_git, objects):
-    for repo in objects.pr_repos:
-        list_pull_requests = hosted_git.api_list_pull_requests(repo)
-        for pr in objects.pull_requests:
+def fill_pull_requests(hosted_git, repo_dict):
+    for repo in repo_dict.keys():
+        list_pull_requests = hosted_git.list_pull_requests(repo)
+        for pr in repo_dict[repo]:
             if not pr.filled:
                 for full_pr in list_pull_requests:
                     if pr.pull_api_url == full_pr['url']:
@@ -62,25 +58,26 @@ def fill_pull_requests(hosted_git, objects):
                         break
 
 
+def get_new_pull_requests(config, hosted_git):
+    notifications = hosted_git.get_new_notifications(mark_read=False)
+    #import json
+    #with open('test/notifications.json') as f:
+    #    notifications = json.loads(f.read())
+    package_set = config.get_package_set()
+    module_set = config.get_module_set()
+    
+    repo_dict = create_pull_requests(notifications, package_set, module_set)
+    fill_pull_requests(hosted_git, repo_dict)
+    
+    return repo_dict
+
+
 config = demod.config.Config()
-
-package_set = config.get_package_set()
-module_set = config.get_module_set()
-
 hosted_git = config.create_hosted_git()
-repos = module_set.union(package_set)
 
-
-notifications = hosted_git.api_notifications()
-#import json
-#with open('test/notifications.json') as f:
-#    notifications = json.loads(f.read())
-
-                
-objects = create_pull_requests(notifications)
-                
-fill_pull_requests(hosted_git, objects)
-
+repo_dict = get_new_pull_requests(config, hosted_git)
+for pr in itertools.chain.from_iterable(repo_dict.values()):
+    print('PR #' + str(pr.pull_id) + ': ' + pr.title)
 
 # MVP: check for notifications, filter out pull requests,
 # new pull reqs -> save (in-memory) new proposals,

@@ -76,7 +76,7 @@ class HostedGit:
             raise HostedGitError('TODO: implement pagination')
         return data
 
-    def api_notifications(self):
+    def get_new_notifications(self, mark_read=True):
         current_time = time.time()
         if self.next_notify_time > current_time:
             sleep_time = int(self.next_notify_time - current_time)
@@ -95,14 +95,15 @@ class HostedGit:
         self.next_notify_time = time.time() + self.notify_poll_interval
         
         n_list = self._return_json(result)
-        if n_list:
+        if n_list and mark_read:
             last_read_at = demod.utils.iso_8601(last_modified)
             result = self._api_call('/notifications', 'PUT', fields={'last_read_at': last_read_at})
             if result.status != 205:
                 raise HostedGitError(str(result.status) + result.reason)
+                
         return n_list
         
-    def api_list_pull_requests(self, repo):
+    def list_pull_requests(self, repo):
         result = self._api_call('/repos/' + self.username + '/' + repo + '/pulls')
         return self._return_json(result)
         
