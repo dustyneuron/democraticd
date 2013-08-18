@@ -1,5 +1,5 @@
-Democracy + open source + server
-= A democratic daemon
+An enforced democratic server
+-----------------------
 
 You install the democratic daemon on your server, and it immediately kicks you off the system.
 It changes the root password, closes down ttys and sshd and removes
@@ -12,14 +12,19 @@ Want to set up mail forwarding, change the voting rules, or just the font on the
 Submit a code change!
 All live code is pushed to an off-server repository in case of catastrophic failure.
 
-Features:
+Potential features:
 - Delegative democracy so non-devs can use it, + you can say "Auto vote for changes that both Bob & Emily vote for".
 - Server forking + per-user data migration, for contentious issues and creating niche communities.
 - Users might pay subscriptions, and vote for funding devs & paying server costs.
 - Modular code so votes can carry forward between changes + you can say "Auto vote for changes to 'webforum' that Dave votes for"
 
+There's a danger people create shill accounts to boost their voting power - hopefuly things like CAPTCHAs or suspending voting rights for inactive accounts will be enough. Paid accounts are one option, resulting in a capitalist system where the power lies with the money. Maybe accounts could be tied to a system where it's difficult to get more than one identity.
 
-I've developed a prototype democratic daemon running at http://runbyyou.com - the live code is pushed offsite to github blah (AGPL). You can make a quick change to some html with the text editor on GitHub, and when you open a pull request the daemon will automatically put your change up for voting. I'd like to add support for open git platforms like Gitorious, but they don't have an API yet.
+I've developed a prototype democratic daemon now running at http://runbyyou.com - the live code is pushed offsite to github blah (AGPL). You can make a quick change to e.g. html with the text editor on GitHub, and when you open a pull request the daemon will automatically put your change up for voting. I'd like to add support for open git platforms like Gitorious, but they don't have an API yet.
+
+I spun up a fresh Debian blah on Linode, ssh'd in, typed '', and the daemon kicked me off. I can no longer get a shell on this system. To some extent you'll have to trust I didn't backdoor it - you could always propose the install of a backdoor-checking program, and you can see the live output of ps, /root/.bash_history and blah here.
+
+I do still have the power to pull the server plug and change the domain records - when there are Bitcoin payment APIs for cloud computing, the daemon could pay for itself and the human could be taken out of that loop.
 
 
 
