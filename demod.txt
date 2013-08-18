@@ -14,10 +14,12 @@ All live code is pushed to an off-server repository in case of catastrophic fail
 
 Features:
 - Delegative democracy so non-devs can use it, + you can say "Auto vote for changes that both Bob & Emily vote for".
-- Server forking + per-user db migration, for contentious issues and niche communities.
+- Server forking + per-user data migration, for contentious issues and creating niche communities.
 - Users might pay subscriptions, and vote for funding devs & paying server costs.
 - Modular code so votes can carry forward between changes + you can say "Auto vote for changes to 'webforum' that Dave votes for"
 
+
+I've developed a prototype democratic daemon running at http://runbyyou.com - the live code is pushed offsite to github blah (AGPL). You can make a quick change to some html with the text editor on GitHub, and when you open a pull request the daemon will automatically put your change up for voting. I'd like to add support for open git platforms like Gitorious, but they don't have an API yet.
 
 
 
