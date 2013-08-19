@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.3
+#!/usr/bin/env python
 
 import demod.config
 
@@ -151,7 +151,7 @@ def go():
 # doing core work...
 #
 # single-dev workflow: "-s --standalone"
-# do a github pull,
+# open a github pull request,
 # daemon picks up on it, saves it to a config file in case daemon dies,
 # and comments 'run $ demod approve 3'
 # Dev runs this command, and the daemon merges, installs, + pushes back

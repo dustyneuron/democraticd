@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.3
+#!/usr/bin/env python
 
 import demod.hostedgit
 
@@ -24,7 +24,7 @@ class Config:
         
     def get_package_data(self, package_name):
         filename = os.path.join(self.packages_dir, package_name + self.json_extension)
-        with open(filename) as f:
+        with open(filename, 'rt') as f:
             data = json.loads(f.read())
         return data
 
@@ -42,14 +42,14 @@ class Config:
         return self.get_package_set().union(self.get_module_set())
         
     def create_hosted_git(self):
-        with open(os.path.join(self.conf_dir, "hosted_git.json")) as f:
+        with open(os.path.join(self.conf_dir, "hosted_git.json"), 'rt') as f:
             config = json.loads(f.read())
         return demod.hostedgit.HostedGit(config['username'], config['password'])
 
     def read_pull_requests(self, repo, pr_class_type):
         filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)
         pr_list = []
-        with open(filename) as f:
+        with open(filename, 'rt') as f:
             data = json.loads(f.read())
         for (issue_id, d) in data.items():
             pr = pr_class_type()
@@ -65,7 +65,7 @@ class Config:
         for pr in pr_list:
             data[pr.issue_id] = vars(pr)
             
-        with open(filename, mode='w') as f:
+        with open(filename, 'wt') as f:
             f.write(json.dumps(data, sort_keys=True, indent=4))
         
 
