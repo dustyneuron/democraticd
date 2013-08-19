@@ -22,6 +22,9 @@ class PullRequest:
             self.status = self.state_NEW
         else:
             self.status = self.state_EMPTY
+            
+    def is_more_recent_than(self, pr):
+        return (self.status > pr.status)
         
     def fill(self, data):
         if data['base']['repo']['name'] != self.repo:
@@ -84,35 +87,64 @@ def fill_pull_requests(hosted_git, repo_dict):
 
 def get_new_pull_requests(config, hosted_git):
     notifications = hosted_git.get_new_notifications(mark_read=False)
-    #import json
-    #with open('test/notifications.json') as f:
-    #    notifications = json.loads(f.read())
+    
     package_set = config.get_package_set()
     module_set = config.get_module_set()
-    
     repo_dict = create_pull_requests(notifications, package_set, module_set)
     fill_pull_requests(hosted_git, repo_dict)
     
     return repo_dict
 
+def update_pull_request_list(old_rp_list, new_rp_list):
+    new_list = list(old_rp_list)
+    for new_rp in new_rp_list:
+        issue_id = new_rp.issue_id
+        matching_prs = [idx for idx in list(range(len(old_rp_list))) if old_rp_list[idx].issue_id == issue_id]
+        if len(matching_prs) == 0:
+            new_list.append(new_rp)
+        elif len(matching_prs) == 1:
+            if new_rp.is_more_recent_than(old_rp_list[matching_prs[0]]):
+                old_rp_list[matching_prs[0]] = new_rp
+        else:
+            raise Exception('pr_list has multiple prs for a single issue id')
+    return new_list
 
-config = demod.config.Config()
-hosted_git = config.create_hosted_git()
+def comment_on_pull_requests(hosted_git, repo_dict):
+    for pr in functools.reduce(lambda acc, x: acc + x, repo_dict.values()):
+        if pr.status == pr.state_FILLED:
+            # Would interact with db at this point, the vote url needs to be live
+            pr.set_vote_url()
+            hosted_git.create_pull_request_comment(pr)
 
-repo_dict = get_new_pull_requests(config, hosted_git)
-
-for (repo, pr_list) in repo_dict.items():
-    config.write_pull_requests(repo, pr_list)
     
-repo_dict = {'democraticd':None}
-for repo in repo_dict.keys():
-    repo_dict[repo] = config.read_pull_requests(repo, PullRequest)
+def daemon_loop(config, hosted_git):
+    while True:
+        print('Starting daemon loop')
+        repo_dict = {}
+        for repo in config.get_repo_set():
+            print('Reading saved pull requests for "' + str(repo) + '"')
+            repo_dict[repo] = config.read_pull_requests(repo, PullRequest)
 
-for pr in functools.reduce(lambda acc, x: acc + x, repo_dict.values()):
-    print('PR #' + str(pr.issue_id) + ': ' + pr.title)
-    # Would interact with db at this point, the vote url needs to be live
-    pr.set_vote_url()
-    hosted_git.create_pull_request_comment(pr)
+        print('Getting new pull request notifications from GitHub API')
+        new_repo_dict = get_new_pull_requests(config, hosted_git)
+        
+        for repo in repo_dict.keys():
+            if repo in new_repo_dict:
+                repo_dict[repo] = update_pull_request_list(repo_dict[repo], new_repo_dict[repo])
+                
+        print('Commenting on pull requests')
+        comment_on_pull_requests(hosted_git, repo_dict)
+        
+        for (repo, pr_list) in repo_dict.items():
+            print('Saving pull requests for "' + str(repo) + '"')
+            config.write_pull_requests(repo, pr_list)
+
+        
+def go():
+    config = demod.config.Config()
+    hosted_git = config.create_hosted_git()
+    daemon_loop(config, hosted_git)
+
 
 # MVP:
 # Is there a non-web UI that makes sense? eg for a single dev

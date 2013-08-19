@@ -38,6 +38,9 @@ class Config:
             module_set = module_set.union(self.get_package_module_set(p))
         return module_set
         
+    def get_repo_set(self):
+        return self.get_package_set().union(self.get_module_set())
+        
     def create_hosted_git(self):
         with open(os.path.join(self.conf_dir, "hosted_git.json")) as f:
             config = json.loads(f.read())

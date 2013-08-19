@@ -18,7 +18,8 @@ Potential features:
 - Users might pay subscriptions, and vote for funding devs & paying server costs.
 - Modular code so votes can carry forward between changes + you can say "Auto vote for changes to 'webforum' that Dave votes for"
 
-There's a danger people create shill accounts to boost their voting power - hopefuly things like CAPTCHAs or suspending voting rights for inactive accounts will be enough. Paid accounts are one option, resulting in a capitalist system where the power lies with the money. Maybe accounts could be tied to a system where it's difficult to get more than one identity.
+# don't post this bit unless people ask
+There is a danger of people registering shill accounts to boost their voting power - hopefuly things like CAPTCHAs or suspending voting rights for inactive accounts will be enough. Paid accounts are one option, resulting in a capitalist system where the power lies with the money. Maybe accounts could be tied to a system where it's difficult to get more than one identity.
 
 I've developed a prototype democratic daemon now running at http://runbyyou.com - the live code is pushed offsite to github blah (AGPL). You can make a quick change to e.g. html with the text editor on GitHub, and when you open a pull request the daemon will automatically put your change up for voting. I'd like to add support for open git platforms like Gitorious, but they don't have an API yet.
 
