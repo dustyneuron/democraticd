@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import datetime
 
 def iso_8601(dt):
