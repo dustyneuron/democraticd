@@ -13,7 +13,7 @@ import datetime
 import dateutil.parser
 
 
-class HostedGitError(Exception):
+class GitHubError(Exception):
     def __init__(self, value):
         self.value = value
     
@@ -21,7 +21,7 @@ class HostedGitError(Exception):
         return repr.repr(self.value)
         
 
-class HostedGit:
+class GitHubAPI:
     json_methods = set(['PUT', 'POST'])
     base_url = 'api.github.com'
     
@@ -63,7 +63,7 @@ class HostedGit:
             result = self.conn_pool.request_encode_url(method, url, headers=headers, fields=fields)
                 
         if not result:
-            raise HostedGitError('urllib request did not return a result')
+            raise GitHubError('urllib request did not return a result')
             
         if result.headers.get('last-modified'):
             self.last_modified[last_modified_key] = result.headers.get('last-modified')
@@ -76,7 +76,7 @@ class HostedGit:
             return []
         data = json.loads(result.data.decode('utf-8'))
         if len(data) >= 30:
-            raise HostedGitError('TODO: implement pagination')
+            raise GitHubError('TODO: implement pagination')
         return data
 
     def get_new_notifications(self, mark_read=True):
@@ -103,7 +103,7 @@ class HostedGit:
             last_read_at = demod.utils.iso_8601(last_modified)
             result = self._api_call('/notifications', 'PUT', fields={'last_read_at': last_read_at})
             if result.status != 205:
-                raise HostedGitError(str(result.status) + result.reason)
+                raise GitHubError(str(result.status) + result.reason)
             result.release_conn()
                 
         return n_list
@@ -124,7 +124,7 @@ class HostedGit:
         
         result = self._api_call(url, 'POST', fields={'body': comment})
         if result.status != 201:
-            raise Exception(str(result.status) + result.reason)
+            raise GitHubError(str(result.status) + result.reason)
         pull_request.set_comment_log(self._return_json(result))
         result.release_conn()
         

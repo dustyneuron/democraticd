@@ -24,7 +24,7 @@ class DemoDaemon:
         
         self.quit_event = gevent.event.Event()
         self.config = demod.config.Config()
-        self.hosted_git = self.config.create_hosted_git(self.quit_event)
+        self.github_api = self.config.create_github_api(self.quit_event)
 
         self.server = gevent.server.StreamServer(('localhost', 9999), lambda sock, addr: DemoDaemon.command_server(self, sock, addr))
         
@@ -60,6 +60,7 @@ class DemoDaemon:
         
         print('Shutdown complete')
 
+
     def save_pull_requests(self, single_repo=None):
         print('Saving pull requests')
         if single_repo:
@@ -68,6 +69,7 @@ class DemoDaemon:
             for (repo, pr_list) in self.repo_dict.items():
                 self.config.write_pull_requests(repo, pr_list)
 
+
     def do_github_actions(self):
         print('At top of daemon loop')
         for repo in self.config.get_repo_set():
@@ -75,7 +77,7 @@ class DemoDaemon:
             self.repo_dict[repo] = self.config.read_pull_requests(repo, pullrequest.PullRequest)
 
         print('Getting new pull request notifications from GitHub API')
-        new_repo_dict = pullrequest.get_new_pull_requests(self.config, self.hosted_git)
+        new_repo_dict = pullrequest.get_new_pull_requests(self.config, self.github_api)
         if new_repo_dict:
             for repo in self.repo_dict.keys():
                 if repo in new_repo_dict:
@@ -83,12 +85,13 @@ class DemoDaemon:
         self.save_pull_requests()
                     
         print('Filling any pull requests if needed')
-        pullrequest.fill_pull_requests(self.hosted_git, self.repo_dict)
+        pullrequest.fill_pull_requests(self.github_api, self.repo_dict)
         self.save_pull_requests()
                         
         print('Commenting on pull requests')
-        pullrequest.comment_on_pull_requests(self.hosted_git, self.repo_dict)
+        pullrequest.comment_on_pull_requests(self.github_api, self.repo_dict)
         self.save_pull_requests()
+        
         
     def _proc_build(self, cmd, pr):
         gevent.subprocess.call(cmd, cwd=self.module_dir)

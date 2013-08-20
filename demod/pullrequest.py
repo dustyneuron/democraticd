@@ -112,7 +112,7 @@ def create_pull_requests(notifications, package_set, module_set):
     return repo_dict
 
 
-def fill_pull_requests(hosted_git, repo_dict):
+def fill_pull_requests(github_api, repo_dict):
     need_fill = False
     for pr in functools.reduce(lambda acc, x: acc + x, repo_dict.values()):
         if pr.state < pr.state_idx('FILLED'):
@@ -122,7 +122,7 @@ def fill_pull_requests(hosted_git, repo_dict):
         return
         
     for repo in repo_dict.keys():
-        list_pull_requests = hosted_git.list_pull_requests(repo)
+        list_pull_requests = github_api.list_pull_requests(repo)
         for pr in repo_dict[repo]:
             if pr.state < pr.state_idx('FILLED'):
                 for full_pr in list_pull_requests:
@@ -133,8 +133,8 @@ def fill_pull_requests(hosted_git, repo_dict):
                 raise Exception('No matching full pull request for ' + str(pr))
 
 
-def get_new_pull_requests(config, hosted_git):
-    notifications = hosted_git.get_new_notifications(mark_read=False)
+def get_new_pull_requests(config, github_api):
+    notifications = github_api.get_new_notifications(mark_read=False)
     if not notifications:
         return {}
     
@@ -155,10 +155,10 @@ def update_pull_request_list(old_rp_list, new_rp_list):
             
     return new_list
 
-def comment_on_pull_requests(hosted_git, repo_dict):    
+def comment_on_pull_requests(github_api, repo_dict):    
     for pr in functools.reduce(lambda acc, x: acc + x, repo_dict.values()):
         if pr.state == pr.state_idx('FILLED'):
             # Would interact with db at this point, the vote url needs to be live
             pr.set_vote_url()
-            hosted_git.create_pull_request_comment(pr)
+            github_api.create_pull_request_comment(pr)
 
