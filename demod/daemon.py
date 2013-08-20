@@ -36,18 +36,21 @@ class DemoDaemon:
         self.server.start()
         
         while not self.quit_event.is_set():
-            self.do_github_actions()
+            self.do_pull_request_actions()
             
         if self.build_greenlet and (not self.build_greenlet.ready()):
             self.build_greenlet.join()
             self.build_greenlet = None
 
-    def save_pull_requests(self):
-        print('Saving all pull requests')
-        for (repo, pr_list) in self.repo_dict.items():
-            self.config.write_pull_requests(repo, pr_list)
+    def save_pull_requests(self, single_repo=None):
+        print('Saving pull requests')
+        if single_repo:
+            self.config.write_pull_requests(single_repo, self.repo_dict[single_repo])
+        else:
+            for (repo, pr_list) in self.repo_dict.items():
+                self.config.write_pull_requests(repo, pr_list)
 
-    def do_github_actions(self):
+    def do_pull_request_actions(self):
         print('At top of daemon loop')
         for repo in self.config.get_repo_set():
             print('Reading saved pull requests for "' + str(repo) + '"')
@@ -64,11 +67,40 @@ class DemoDaemon:
         print('Filling any pull requests if needed')
         pullrequest.fill_pull_requests(self.hosted_git, self.repo_dict)
         self.save_pull_requests()
+        
+        print('Building any pull requests if needed')
+        for pr in functools.reduce(lambda acc, x: acc + x, self.repo_dict.values()):
+            if pr.state == pr.state_idx('APPROVED'):
+                self.try_start_build(pr)
                 
         print('Commenting on pull requests')
         pullrequest.comment_on_pull_requests(self.hosted_git, self.repo_dict)
         self.save_pull_requests()
-                    
+        
+    def _proc_build(self, cmd):
+        gevent.subprocess.call(cmd, cwd=self.module_dir)
+        print('build subprocess.call returned')
+        self.build_greenlet.kill()
+        raise Exception('this code should never be called')
+    
+    def try_start_build(self, pr):
+        if (not self.build_greenlet) or self.build_greenlet.ready():
+            cmd = [
+                self.python,
+                '-m',
+                'demod.build',
+                str(pr.repo),
+                str(pr.issue_id)
+                ]
+                
+            pr.set_state('BUILDING')
+            self.save_pull_requests(pr.repo)
+            
+            self.build_greenlet = gevent.Greenlet.spawn(DemoDaemon._proc_build, self, cmd)
+            print('Spawned builder')
+            sys.stdout.flush()
+        else:
+            print('Cannot spawn builder as one exists already')
             
     def command_server(self, socket, address):
         print ('New connection from %s:%s' % address)
@@ -116,22 +148,11 @@ class DemoDaemon:
                     found_pr = None
                 
                 if found_pr:
-                    fileobj.write(('MERGING PULL REQUEST\n').encode())
+                    fileobj.write(('PULL REQUEST APPROVED\n').encode())
                     fileobj.write(found_pr.pretty_str().encode())
                     
-                    cmd = [
-                        self.python,
-                        '-m',
-                        'demod.build',
-                        str(found_pr.issue_id)
-                        ]
-                    
-                    self.build_greenlet = gevent.Greenlet.spawn(
-                        gevent.subprocess.call,
-                        cmd,
-                        cwd=self.module_dir,
-                        stderr=sys.stderr,
-                        stdout=sys.stdout)
+                    found_pr.set_state('APPROVED')
+                    self.save_pull_requests(found_pr.repo)
                     
                 else:
                     fileobj.write(('No pull request with id #' + str(issue_id) + ' ready for merging\n').encode())
