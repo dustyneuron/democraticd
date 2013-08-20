@@ -4,6 +4,8 @@ from . import pullrequest
 import gevent
 import gevent.server
 import gevent.event
+
+import functools
     
 class DemoDaemon:
     def __init__(self):
@@ -53,7 +55,7 @@ class DemoDaemon:
     def command_server(self, socket, address):
         print ('New connection from %s:%s' % address)
         socket.sendall('Welcome to the Democratic Daemon server!\n')
-        help_message = 'Commands are "quit", "list" and "approve"\n'
+        help_message = 'Commands are "stop", "list" and "approve"\n'
         socket.sendall(help_message)
         fileobj = socket.makefile()
         while True:
@@ -63,8 +65,9 @@ class DemoDaemon:
                 break
                 
             command = line.decode().strip().lower()
-            if command == 'quit':
-                print ("client told server to quit")
+            if command == 'stop':
+                print ("client told server to stop")
+                fileobj.write(('STOPPING SERVER\n').encode())
                 self.quit_event.set()
                 self.server.stop()
                 break
@@ -73,8 +76,26 @@ class DemoDaemon:
                     for pr in pr_list:
                         fileobj.write(pr.pretty_str().encode())
 
-            elif command == 'approve':
-                fileobj.write('Approve not implemented yet\n'.encode())
+            elif command.startswith('approve'):
+                issue_id = None
+                try:
+                    issue_id = int(command[len('approve '):])
+                except Exception as e:
+                    fileobj.write(('error parsing integer issue number\n' + str(e) + '\n').encode())
+                    
+                found_pr = None
+                if issue_id:
+                    for pr in functools.reduce(lambda acc, x: acc + x, self.repo_dict.values()):
+                        if pr.state == pr.state_idx('COMMENTED'):
+                            if pr.issue_id == issue_id:
+                                found_pr = pr
+                                break
+                            
+                if found_pr:
+                    fileobj.write(('MERGING PULL REQUEST\n').encode())
+                    fileobj.write(found_pr.pretty_str().encode())
+                else:
+                    fileobj.write(('No pull request with id #' + str(issue_id) + ' ready for merging\n').encode())
                 
             else:
                 fileobj.write(('Unknown command "' + command + '"\n').encode())
