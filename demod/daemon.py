@@ -45,7 +45,7 @@ class DemoDaemon:
             self.repo_dict[repo] = self.config.read_pull_requests(repo, pullrequest.PullRequest)
             for pr in self.repo_dict[repo]:
                 if pr.state == pr.state_idx('APPROVED'):
-                    self.build_queue.put(pr)
+                    self.build_queue.put((pr.repo, pr.key()))
         
         # main GitHub loop, synchronous so we stay within rate limits
         while not self.quit_event.is_set():
@@ -96,15 +96,18 @@ class DemoDaemon:
         # pr.set_state(built)?
         self.build_greenlet.kill()
         raise Exception('this code should never be called')
-    
+        
     def start_builds(self):
         while True:
-            pr = self.build_queue.get()
+            (repo, key) = self.build_queue.get()
             
             if self.build_greenlet and (not self.build_greenlet.ready()):
                 print('Trying to spawn new builder, waiting for current one to finish')
-                self.build_greenlet.join() 
-                
+                self.build_greenlet.join()
+            
+            idx = pullrequest.find_pull_request_idx(self.repo_dict[repo], key)
+            pr = self.repo_dict[repo][idx]
+            
             cmd = [
                 self.python,
                 '-m',
@@ -172,7 +175,7 @@ class DemoDaemon:
                     
                     found_pr.set_state('APPROVED')
                     self.save_pull_requests(found_pr.repo)
-                    self.build_queue.put(found_pr)
+                    self.build_queue.put((found_pr.repo, found_pr.key()))
                     
                 else:
                     fileobj.write(('No pull request with id #' + str(issue_id) + ' ready for merging\n').encode())

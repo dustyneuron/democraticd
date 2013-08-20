@@ -80,6 +80,17 @@ class PullRequest:
             s += '\t' + self.pull_api_url + '\n'
         return s
 
+                
+def find_pull_request_idx(pr_list, key):
+    matching_prs = [idx for idx in list(range(len(pr_list))) if pr_list[idx].key() == key]
+    if len(matching_prs) == 0:
+        return -1
+    elif len(matching_prs) == 1:
+        return matching_prs[0]
+    else:
+        raise Exception('pr_list has multiple prs for a single key')
+
+
 def create_pull_requests(notifications, package_set, module_set):
     repo_dict = {}
     for n in notifications:
@@ -136,18 +147,15 @@ def get_new_pull_requests(config, hosted_git):
 def update_pull_request_list(old_rp_list, new_rp_list):
     new_list = list(old_rp_list)
     for new_rp in new_rp_list:
-        key = new_rp.key()
-        matching_prs = [idx for idx in list(range(len(old_rp_list))) if old_rp_list[idx].key() == key]
-        if len(matching_prs) == 0:
+        idx = find_pull_request_idx(old_rp_list, new_rp.key())
+        if idx == -1:
             new_list.append(new_rp)
-        elif len(matching_prs) == 1:
-            if new_rp.is_more_recent_than(old_rp_list[matching_prs[0]]):
-                old_rp_list[matching_prs[0]] = new_rp
-        else:
-            raise Exception('pr_list has multiple prs for a single issue id')
+        elif new_rp.is_more_recent_than(old_rp_list[idx]):
+            old_rp_list[idx] = new_rp
+            
     return new_list
 
-def comment_on_pull_requests(hosted_git, repo_dict):
+def comment_on_pull_requests(hosted_git, repo_dict):    
     for pr in functools.reduce(lambda acc, x: acc + x, repo_dict.values()):
         if pr.state == pr.state_idx('FILLED'):
             # Would interact with db at this point, the vote url needs to be live
