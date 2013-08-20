@@ -1,9 +1,11 @@
 import demod.config
+import demod.build
 from . import pullrequest
 
 import gevent
 import gevent.server
 import gevent.event
+import gevent.subprocess
 
 import functools
     
@@ -16,6 +18,8 @@ class DemoDaemon:
         self.server = gevent.server.StreamServer(('localhost', 9999), lambda sock, addr: DemoDaemon.command_server(self, sock, addr))
         
         self.repo_dict = {}
+        
+        self.build_greenlet = None
         
     def start(self):
         print('Starting server on port 9999')
@@ -90,10 +94,18 @@ class DemoDaemon:
                             if pr.issue_id == issue_id:
                                 found_pr = pr
                                 break
-                            
+                
+                if self.build_greenlet and (not self.build_greenlet.ready()):
+                    fileobj.write(('Error - already merging a pull request\n').encode())
+                    found_pr = None
+                
                 if found_pr:
                     fileobj.write(('MERGING PULL REQUEST\n').encode())
                     fileobj.write(found_pr.pretty_str().encode())
+                    
+                    cmd = ['demod-build', str(found_pr.issue_id)]
+                    self.build_greenlet = gevent.Greenlet.spawn(gevent.subprocess.check_output, cmd)
+                    
                 else:
                     fileobj.write(('No pull request with id #' + str(issue_id) + ' ready for merging\n').encode())
                 

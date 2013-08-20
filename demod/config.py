@@ -29,6 +29,9 @@ class Config:
     def get_package_module_set(self, package_name):
         return set(self.get_package_data(package_name)['modules'])
         
+    def get_package_deb_set(self, package_name):
+        return set(self.get_package_data(package_name)['deb_packages'])
+        
     def get_module_set(self):
         module_set = set([])
         package_names = self.get_package_set()
