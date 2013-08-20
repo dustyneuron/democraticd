@@ -39,10 +39,10 @@ class Config:
     def get_repo_set(self):
         return self.get_package_set().union(self.get_module_set())
         
-    def create_hosted_git(self):
+    def create_hosted_git(self, quit_event):
         with open(os.path.join(self.conf_dir, "hosted_git.json"), 'rt') as f:
             config = json.loads(f.read())
-        return demod.hostedgit.HostedGit(config['username'], config['password'])
+        return demod.hostedgit.HostedGit(config['username'], config['password'], quit_event)
 
     def read_pull_requests(self, repo, pr_class_type):
         filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)

@@ -85,6 +85,8 @@ def fill_pull_requests(hosted_git, repo_dict):
 
 def get_new_pull_requests(config, hosted_git):
     notifications = hosted_git.get_new_notifications(mark_read=False)
+    if not notifications:
+        return {}
     
     package_set = config.get_package_set()
     module_set = config.get_module_set()

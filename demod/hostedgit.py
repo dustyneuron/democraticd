@@ -1,5 +1,10 @@
 import demod.utils
 
+import gevent
+import gevent.monkey
+# This doesn't work yet under python 3
+# gevent.monkey.patch_socket()
+
 import json
 import urllib3
 import base64
@@ -20,13 +25,14 @@ class HostedGit:
     json_methods = set(['PUT', 'POST'])
     base_url = 'api.github.com'
     
-    def __init__(self, username, password):
+    def __init__(self, username, password, quit_event):
         self.username = username
         self.password = password
         self.next_notify_time = time.time()
         self.notify_poll_interval = 0
         self.last_modified = {}
         self.conn_pool = None
+        self.quit_event = quit_event
         
     def _api_call(self, url, method='GET', fields=None, headers={}):
         print('_api_call(' + method + ', ' + url + ')')
@@ -78,7 +84,8 @@ class HostedGit:
         if self.next_notify_time > current_time:
             sleep_time = int(self.next_notify_time - current_time)
             print('Sleeping for ' + str(sleep_time) + ' secs because of X-poll-interval')
-            time.sleep(sleep_time)
+            if self.quit_event.wait(sleep_time):
+                return []
             
         result = self._api_call('/notifications')
         if result.headers.get('last-modified'):
