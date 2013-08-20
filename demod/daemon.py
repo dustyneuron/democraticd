@@ -35,17 +35,25 @@ def go():
 
 from gevent.server import StreamServer
 
-def echo(socket, address):
-    print('New connection from %s:%s' % address)
-    while True:
-        data = socket.recv(4096)
-        if not data:
-            print('client disconnected')
-            break
-        
-        socket.send(data)
-        print('echoed ' + repr(data))
+server = None
 
+def echo(socket, address):
+    print ('New connection from %s:%s' % address)
+    socket.sendall('Welcome to the echo server! Type quit to exit.\r\n')
+    fileobj = socket.makefile()
+    while True:
+        line = fileobj.readline()
+        if not line:
+            print ("client disconnected")
+            break
+        if line.decode().strip().lower() == 'quit':
+            print ("client told server to quit")
+            server.stop()
+            # server.stop doesn't yield so next statement will execute
+            return
+        fileobj.write(line)
+        fileobj.flush()
+        print ("echoed back %r" % line)
 
 
 server = StreamServer(('localhost', 9999), echo)
