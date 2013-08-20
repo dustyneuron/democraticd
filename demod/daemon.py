@@ -13,6 +13,8 @@ class DemoDaemon:
 
         self.server = gevent.server.StreamServer(('localhost', 9999), lambda sock, addr: DemoDaemon.command_server(self, sock, addr))
         
+        self.repo_dict = {}
+        
     def start(self):
         print('Starting server on port 9999')
         self.server.start()
@@ -20,33 +22,38 @@ class DemoDaemon:
         while not self.quit_event.is_set():
             self.do_github_actions()
 
+    def save_pull_requests(self):
+        print('Saving all pull requests')
+        for (repo, pr_list) in self.repo_dict.items():
+            self.config.write_pull_requests(repo, pr_list)
 
     def do_github_actions(self):
         print('At top of daemon loop')
-        repo_dict = {}
         for repo in self.config.get_repo_set():
             print('Reading saved pull requests for "' + str(repo) + '"')
-            repo_dict[repo] = self.config.read_pull_requests(repo, pullrequest.PullRequest)
+            self.repo_dict[repo] = self.config.read_pull_requests(repo, pullrequest.PullRequest)
 
         print('Getting new pull request notifications from GitHub API')
         new_repo_dict = pullrequest.get_new_pull_requests(self.config, self.hosted_git)
         if new_repo_dict:
-            for repo in repo_dict.keys():
+            for repo in self.repo_dict.keys():
                 if repo in new_repo_dict:
-                    repo_dict[repo] = pullrequest.update_pull_request_list(repo_dict[repo], new_repo_dict[repo])
+                    self.repo_dict[repo] = pullrequest.update_pull_request_list(self.repo_dict[repo], new_repo_dict[repo])
+        self.save_pull_requests()
+                    
+        print('Filling any pull requests if needed')
+        pullrequest.fill_pull_requests(self.hosted_git, self.repo_dict)
+        self.save_pull_requests()
                 
         print('Commenting on pull requests')
-        pullrequest.comment_on_pull_requests(self.hosted_git, repo_dict)
-        
-        for (repo, pr_list) in repo_dict.items():
-            print('Saving pull requests for "' + str(repo) + '"')
-            self.config.write_pull_requests(repo, pr_list)
-            
+        pullrequest.comment_on_pull_requests(self.hosted_git, self.repo_dict)
+        self.save_pull_requests()
+                    
             
     def command_server(self, socket, address):
         print ('New connection from %s:%s' % address)
-        socket.sendall('Welcome to the Democratic Daemon server!\r\n')
-        help_message = 'Commands are "quit", "list" and "approve"\r\n'
+        socket.sendall('Welcome to the Democratic Daemon server!\n')
+        help_message = 'Commands are "quit", "list" and "approve"\n'
         socket.sendall(help_message)
         fileobj = socket.makefile()
         while True:
@@ -62,16 +69,18 @@ class DemoDaemon:
                 self.server.stop()
                 break
             elif command == 'list':
-                pass
+                for (repo, pr_list) in self.repo_dict.items():
+                    for pr in pr_list:
+                        fileobj.write(pr.pretty_str().encode())
+
             elif command == 'approve':
-                pass
+                fileobj.write('Approve not implemented yet\n'.encode())
+                
             else:
-                fileobj.write(('Unknown command "' + command + '"\r\n').encode())
+                fileobj.write(('Unknown command "' + command + '"\n').encode())
                 fileobj.write(help_message.encode())
                 
-            fileobj.write(line)
             fileobj.flush()
-            print ("echoed back %r" % line)
 
 
 

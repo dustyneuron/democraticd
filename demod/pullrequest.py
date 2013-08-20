@@ -3,26 +3,40 @@ import demod.config
 import functools
     
 class PullRequest:
-    state_EMPTY = 0
-    state_NEW = 1
-    state_FILLED = 2
-    state_COMMENTED = 3
-    
-    def __init__(self):
-        pass
-        
+    states = {
+        0: 'EMPTY',
+        1: 'NEW',
+        2: 'FILLED',
+        3: 'COMMENTED',
+        }
+            
     def __init__(self, data=None):
         if data:
             self.repo = data['repository']['name']
             self.title = data['subject']['title']
             self.pull_api_url = data['subject']['url']
             self.repo_type = None
-            self.status = self.state_NEW
+            self.set_state('NEW')
         else:
-            self.status = self.state_EMPTY
+            self.set_state('EMPTY')
+    
+    def key(self):
+        return self.pull_api_url
             
+    def state_idx(self, label):
+        for (k, v) in self.states.items():
+            if v == label:
+                return k
+        raise Exception('No such state ' + str(label))
+
+    def set_state(self, label):
+        self.state = self.state_idx(label)
+
+    def get_state(self):
+        return self.states[self.state]
+    
     def is_more_recent_than(self, pr):
-        return (self.status > pr.status)
+        return (self.state > pr.state)
         
     def fill(self, data):
         if data['base']['repo']['name'] != self.repo:
@@ -36,7 +50,7 @@ class PullRequest:
         self.base_sha = data['base']['sha']
         self.repo_git_url = data['head']['repo']['clone_url']
         self.repo_api_url = data['head']['repo']['url']
-        self.status = self.state_FILLED
+        self.set_state('FILLED')
         
     def set_vote_url(self):
         self.vote_url = 'http://someurl.com/vote/' + self.repo + '/' + str(self.issue_id) + '/'
@@ -45,8 +59,24 @@ class PullRequest:
         self.comment_id = data['id']
         self.comment_api_url = data['url']
         self.comment_body = data['body']
-        self.status = self.state_COMMENTED
+        self.set_state('COMMENTED')
         
+    def __str__(self):
+        return self.pretty_str()
+        
+    def pretty_str(self):
+        if self.state >= self.state_idx('FILLED'):
+            s = 'Pull request #' + str(self.issue_id) + ', state ' + self.get_state() + '\n'
+            s += '\t' + self.title + '\n'
+            s += '\t' + self.description + '\n'
+            s += '\t' + self.pull_api_url + '\n'
+            if self.state >= self.state_idx('COMMENTED'):
+                s += '\tComment Id #' + str(self.comment_id) + '\n'
+        else:
+            s = 'Pull request state ' + self.get_state() + '\n'
+            s += '\t' + self.title + '\n'
+            s += '\t' + self.pull_api_url + '\n'
+        return s
 
 def create_pull_requests(notifications, package_set, module_set):
     repo_dict = {}
@@ -70,17 +100,24 @@ def create_pull_requests(notifications, package_set, module_set):
 
 
 def fill_pull_requests(hosted_git, repo_dict):
+    need_fill = False
+    for pr in functools.reduce(lambda acc, x: acc + x, repo_dict.values()):
+        if pr.state < pr.state_idx('FILLED'):
+            need_fill = True
+            break
+    if not need_fill:
+        return
+        
     for repo in repo_dict.keys():
         list_pull_requests = hosted_git.list_pull_requests(repo)
         for pr in repo_dict[repo]:
-            filled = False
-            for full_pr in list_pull_requests:
-                if pr.pull_api_url == full_pr['url']:
-                    pr.fill(full_pr)
-                    filled = True
-                    break
-            if not filled:
-                raise Exception('No matching full pull request for ' + str(pr.pull_api_url))
+            if pr.state < pr.state_idx('FILLED'):
+                for full_pr in list_pull_requests:
+                    if pr.pull_api_url == full_pr['url']:
+                        pr.fill(full_pr)
+                        break
+            if pr.state < pr.state_idx('FILLED'):
+                raise Exception('No matching full pull request for ' + str(pr))
 
 
 def get_new_pull_requests(config, hosted_git):
@@ -91,15 +128,14 @@ def get_new_pull_requests(config, hosted_git):
     package_set = config.get_package_set()
     module_set = config.get_module_set()
     repo_dict = create_pull_requests(notifications, package_set, module_set)
-    fill_pull_requests(hosted_git, repo_dict)
     
     return repo_dict
 
 def update_pull_request_list(old_rp_list, new_rp_list):
     new_list = list(old_rp_list)
     for new_rp in new_rp_list:
-        issue_id = new_rp.issue_id
-        matching_prs = [idx for idx in list(range(len(old_rp_list))) if old_rp_list[idx].issue_id == issue_id]
+        key = new_rp.key()
+        matching_prs = [idx for idx in list(range(len(old_rp_list))) if old_rp_list[idx].key() == key]
         if len(matching_prs) == 0:
             new_list.append(new_rp)
         elif len(matching_prs) == 1:
@@ -111,7 +147,7 @@ def update_pull_request_list(old_rp_list, new_rp_list):
 
 def comment_on_pull_requests(hosted_git, repo_dict):
     for pr in functools.reduce(lambda acc, x: acc + x, repo_dict.values()):
-        if pr.status == pr.state_FILLED:
+        if pr.state == pr.state_idx('FILLED'):
             # Would interact with db at this point, the vote url needs to be live
             pr.set_vote_url()
             hosted_git.create_pull_request_comment(pr)
