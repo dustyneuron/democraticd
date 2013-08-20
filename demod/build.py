@@ -9,7 +9,7 @@ import subprocess
 import functools
 
 def run(args):
-    cmd = functools.reduce(lambda acc, x: acc + x, args)
+    cmd = functools.reduce(lambda acc, x: acc + ' ' + x, args)
     print('run: ' + cmd)
     r = subprocess.call(args, stderr=sys.stderr, stdout=sys.stdout)
     if r != 0:
