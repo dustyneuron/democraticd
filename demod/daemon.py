@@ -6,11 +6,21 @@ import gevent
 import gevent.server
 import gevent.event
 import gevent.subprocess
+import gevent.socket
 
 import functools
+import sys
+import os.path
+import sysconfig
     
 class DemoDaemon:
     def __init__(self):
+        self.python = 'python' + sysconfig.get_python_version()[0]
+        self.module_dir = '.'
+        if sys.argv[0]:
+            self.module_dir = os.path.join(os.path.dirname(sys.argv[0]), '..')
+        self.module_dir = os.path.abspath(self.module_dir)
+        
         self.quit_event = gevent.event.Event()
         self.config = demod.config.Config()
         self.hosted_git = self.config.create_hosted_git(self.quit_event)
@@ -27,6 +37,10 @@ class DemoDaemon:
         
         while not self.quit_event.is_set():
             self.do_github_actions()
+            
+        if self.build_greenlet and (not self.build_greenlet.ready()):
+            self.build_greenlet.join()
+            self.build_greenlet = None
 
     def save_pull_requests(self):
         print('Saving all pull requests')
@@ -74,7 +88,9 @@ class DemoDaemon:
                 fileobj.write(('STOPPING SERVER\n').encode())
                 self.quit_event.set()
                 self.server.stop()
-                break
+                socket.shutdown(gevent.socket.SHUT_RDWR)
+                return
+                
             elif command == 'list':
                 for (repo, pr_list) in self.repo_dict.items():
                     for pr in pr_list:
@@ -103,8 +119,19 @@ class DemoDaemon:
                     fileobj.write(('MERGING PULL REQUEST\n').encode())
                     fileobj.write(found_pr.pretty_str().encode())
                     
-                    cmd = ['demod-build', str(found_pr.issue_id)]
-                    self.build_greenlet = gevent.Greenlet.spawn(gevent.subprocess.check_output, cmd)
+                    cmd = [
+                        self.python,
+                        '-m',
+                        'demod.build',
+                        str(found_pr.issue_id)
+                        ]
+                    
+                    self.build_greenlet = gevent.Greenlet.spawn(
+                        gevent.subprocess.call,
+                        cmd,
+                        cwd=self.module_dir,
+                        stderr=sys.stderr,
+                        stdout=sys.stdout)
                     
                 else:
                     fileobj.write(('No pull request with id #' + str(issue_id) + ' ready for merging\n').encode())
