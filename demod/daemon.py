@@ -33,35 +33,48 @@ def go():
 
 
 
-from gevent.server import StreamServer
 
-server = None
+import gevent
+import gevent.server
+import gevent.event
 
-def echo(socket, address):
+quit_event = gevent.event.Event()
+
+def command_server(socket, address):
     print ('New connection from %s:%s' % address)
-    socket.sendall('Welcome to the echo server! Type quit to exit.\r\n')
+    socket.sendall('Welcome to the Democratic Daemon server!\r\n')
+    help_message = 'Commands are "quit", "list" and "approve"\r\n'
+    socket.sendall(help_message)
     fileobj = socket.makefile()
     while True:
         line = fileobj.readline()
         if not line:
             print ("client disconnected")
             break
-        if line.decode().strip().lower() == 'quit':
+            
+        command = line.decode().strip().lower()
+        if command == 'quit':
             print ("client told server to quit")
-            server.stop()
-            # server.stop doesn't yield so next statement will execute
-            return
+            quit_event.set()
+            break
+        elif command == 'list':
+            pass
+        elif command == 'approve':
+            pass
+        else:
+            fileobj.write(('Unknown command "' + command + '"\r\n').encode())
+            fileobj.write(help_message.encode())
+            
         fileobj.write(line)
         fileobj.flush()
         print ("echoed back %r" % line)
 
 
-server = StreamServer(('localhost', 9999), echo)
-# to start the server asynchronously, use its start() method;
-# we use blocking serve_forever() here because we have no other jobs
-print('Starting echo server on port 9999')
-server.serve_forever()
-
+if __name__ == '__main__':
+    server = gevent.server.StreamServer(('localhost', 9999), command_server)
+    print('Starting server on port 9999')
+    server.start()
+    quit_event.wait()
 
 
 # MVP:
