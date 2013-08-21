@@ -1,6 +1,6 @@
-import demod.config
-import demod.build
-from . import pullrequest
+import democraticd.config
+import democraticd.build
+from democraticd import pullrequest
 
 import gevent
 import gevent.server
@@ -14,7 +14,7 @@ import sys
 import os.path
 import sysconfig
     
-class DemoDaemon:
+class DemocraticDaemon:
     def __init__(self):
         self.python = 'python' + sysconfig.get_python_version()[0]
         self.module_dir = '.'
@@ -23,10 +23,13 @@ class DemoDaemon:
         self.module_dir = os.path.abspath(self.module_dir)
         
         self.quit_event = gevent.event.Event()
-        self.config = demod.config.Config()
+        self.config = democraticd.config.Config()
         self.github_api = self.config.create_github_api(self.quit_event)
 
-        self.server = gevent.server.StreamServer(('localhost', 9999), lambda sock, addr: DemoDaemon.command_server(self, sock, addr))
+        self.server = gevent.server.StreamServer(
+            ('localhost', self.config.port),
+            lambda sock, addr: self.command_server(self, sock, addr)
+            )
         
         self.repo_dict = {}
         
@@ -38,11 +41,11 @@ class DemoDaemon:
         print('Starting server on port 9999')
         self.server.start()
         
-        gevent.Greenlet.spawn(DemoDaemon.start_builds, self)
+        gevent.Greenlet.spawn(self.start_builds, self)
         
         # Queue any builds that didn't get run last time
         for repo in self.config.get_repo_set():
-            self.repo_dict[repo] = self.config.read_pull_requests(repo, pullrequest.PullRequest)
+            self.repo_dict[repo] = self.config.read_pull_requests(repo)
             for pr in self.repo_dict[repo]:
                 if pr.state == pr.state_idx('APPROVED'):
                     self.build_queue.put((pr.repo, pr.key()))
@@ -74,7 +77,7 @@ class DemoDaemon:
         print('At top of daemon loop')
         for repo in self.config.get_repo_set():
             print('Reading saved pull requests for "' + str(repo) + '"')
-            self.repo_dict[repo] = self.config.read_pull_requests(repo, pullrequest.PullRequest)
+            self.repo_dict[repo] = self.config.read_pull_requests(repo)
 
         print('Getting new pull request notifications from GitHub API')
         new_repo_dict = pullrequest.get_new_pull_requests(self.config, self.github_api)
@@ -111,10 +114,11 @@ class DemoDaemon:
             idx = pullrequest.find_pull_request_idx(self.repo_dict[repo], key)
             pr = self.repo_dict[repo][idx]
             
+            # TODO: find a cleaner way to spawn build process
             cmd = [
                 self.python,
                 '-m',
-                'demod.build',
+                'democraticd.build',
                 str(pr.repo),
                 str(pr.issue_id)
                 ]
@@ -122,7 +126,7 @@ class DemoDaemon:
             pr.set_state('BUILDING')
             self.save_pull_requests(pr.repo)
             
-            self.build_greenlet = gevent.Greenlet.spawn(DemoDaemon._proc_build, self, cmd, pr)
+            self.build_greenlet = gevent.Greenlet.spawn(self._proc_build, self, cmd, pr)
             print('Spawned builder')
             
             self.build_queue.task_done()
@@ -196,24 +200,5 @@ class DemoDaemon:
 
 
 if __name__ == '__main__':
-    DemoDaemon().start()
-
-
-# MVP:
-# Is there a non-web UI that makes sense? eg for a single dev
-# doing core work...
-#
-# single-dev workflow: "-s --standalone"
-# open a github pull request,
-# daemon picks up on it, saves it to a config file in case daemon dies,
-# and comments 'run $ demod approve 3'
-# Dev runs this command, and the daemon merges, installs, + pushes back
-# to github
-#
-##
-#
-# download new pulls into local git repo
-# merge, install + push back to github
-
-
+    DemocraticDaemon().start()
 

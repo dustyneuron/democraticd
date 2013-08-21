@@ -1,5 +1,4 @@
-import demod.config
-import demod.pullrequest
+import democraticd.config
 
 import time
 import sys
@@ -18,8 +17,8 @@ def run(args):
 def build(package, issue_id):
     print('build started (' + package + ', ' + issue_id + ')')
     
-    config = demod.config.Config()
-    pr_list = config.read_pull_requests(package, demod.pullrequest.PullRequest)
+    config = democraticd.config.Config()
+    pr_list = config.read_pull_requests(package)
     found_pr = None
     for pr in pr_list:
         if (pr.state == pr.state_idx('BUILDING')) and (pr.issue_id == int(issue_id)):

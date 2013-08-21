@@ -1,5 +1,3 @@
-import demod.config
-
 import functools
     
 class PullRequest:

@@ -1,4 +1,4 @@
-import demod.utils
+from democraticd.utils import iso_8601
 
 import gevent
 import gevent.monkey
@@ -100,7 +100,7 @@ class GitHubAPI:
         
         n_list = self._return_json(result)
         if n_list and mark_read:
-            last_read_at = demod.utils.iso_8601(last_modified)
+            last_read_at = iso_8601(last_modified)
             result = self._api_call('/notifications', 'PUT', fields={'last_read_at': last_read_at})
             if result.status != 205:
                 raise GitHubError(str(result.status) + result.reason)

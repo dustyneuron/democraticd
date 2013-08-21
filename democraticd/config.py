@@ -1,4 +1,5 @@
-import demod.github_api
+from democraticd import github_api
+from democraticd import pullrequest
 
 import os
 import json
@@ -14,6 +15,7 @@ class Config:
         self.packages_dir = os.path.join(self.conf_dir, "packages")
         self.pull_requests_dir = os.path.join(self.conf_dir, "pull-requests")
         self.json_extension = ".json"
+        self.port = 9999
         
     def get_package_set(self):
         package_names = set([])
@@ -49,15 +51,15 @@ class Config:
     def create_github_api(self, quit_event):
         with open(os.path.join(self.conf_dir, "github_api.json"), 'rt') as f:
             config = json.loads(f.read())
-        return demod.github_api.GitHubAPI(config['username'], config['password'], quit_event)
+        return github_api.GitHubAPI(config['username'], config['password'], quit_event)
 
-    def read_pull_requests(self, repo, pr_class_type):
+    def read_pull_requests(self, repo):
         filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)
         pr_list = []
         with open(filename, 'rt') as f:
             data = json.loads(f.read())
         for (issue_id, d) in data.items():
-            pr = pr_class_type()
+            pr = pullrequest.PullRequest()
             for (k, v) in d.items():
                 pr.__dict__[k] = v
             pr_list.append(pr)

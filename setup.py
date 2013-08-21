@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-setup(name='demod',
+setup(name='democraticd',
         version='0.1',
         description='A Democratic Daemon',
         long_description="""\
@@ -14,7 +14,7 @@ Debian packages.
         author='Tom Scholl',
         author_email='tom@dustyneuron.com',
         url='https://github.com/democraticd/democraticd',
-        packages=['demod'],
+        packages=['democraticd'],
         classifiers=[
             'Development Status :: 2 - Pre-Alpha',
             'Environment :: Console',
