@@ -3,6 +3,10 @@ import demod.github_api
 import os
 import json
 
+# TODO: file locking for safe IPC e.g. with build system
+# Sqlite would work, but a schema-less solution is best
+# python-lockfile? python-zc.lockfile? lockfile-progs?
+# Cross-platform is good, python3 support mandatory :P
 
 class Config:
     def __init__(self):
