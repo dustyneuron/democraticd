@@ -28,7 +28,7 @@ class DemocraticDaemon:
 
         self.server = gevent.server.StreamServer(
             ('localhost', self.config.port),
-            lambda sock, addr: self.command_server(self, sock, addr)
+            lambda sock, addr: self.command_server(sock, addr)
             )
         
         self.repo_dict = {}
@@ -41,7 +41,7 @@ class DemocraticDaemon:
         print('Starting server on port 9999')
         self.server.start()
         
-        gevent.Greenlet.spawn(self.start_builds, self)
+        gevent.Greenlet.spawn(self.start_builds)
         
         # Queue any builds that didn't get run last time
         for repo in self.config.get_repo_set():
@@ -126,7 +126,7 @@ class DemocraticDaemon:
             pr.set_state('BUILDING')
             self.save_pull_requests(pr.repo)
             
-            self.build_greenlet = gevent.Greenlet.spawn(self._proc_build, self, cmd, pr)
+            self.build_greenlet = gevent.Greenlet.spawn(self._proc_build, cmd, pr)
             print('Spawned builder')
             
             self.build_queue.task_done()
@@ -196,8 +196,9 @@ class DemocraticDaemon:
                 fileobj.write(help_message.encode())
                 
             fileobj.flush()
-
-
+    
 def start():
     DemocraticDaemon().start()
 
+if __name__ == "__main__":
+    start()
