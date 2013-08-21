@@ -1,0 +1,21 @@
+Source: python3-democraticd
+Section: contrib/python
+Priority: extra
+Maintainer: Tom Scholl <tom@dustyneuron.com>
+Build-Depends: debhelper (>= 8.0.0), python3-all, python3-setuptools
+Standards-Version: 3.9.4
+Homepage: https://github.com/democraticd/democraticd/
+Vcs-Git: git://github.com/democraticd/democraticd.git
+Vcs-Browser: https://github.com/democraticd/democraticd/
+X-Python3-Version: >= 3.3
+
+Package: python3-democraticd
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, python3-gevent
+Description: A democratic daemon
+ A democratic daemon is the core system service that runs an
+ enforced democratic server.
+ .
+ This daemon checks for GitHub pull requests and saves them to a database.
+ When pull requests are approved, it rebuilds and installs the changed
+ Debian packages.

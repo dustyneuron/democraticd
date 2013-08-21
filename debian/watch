@@ -1,0 +1,6 @@
+# See uscan(1) for format
+
+version=3
+
+https://github.com/democraticd/democraticd/tags .*/(\d[\d\.]*)\.tar\.gz
+
