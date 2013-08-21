@@ -198,7 +198,6 @@ class DemocraticDaemon:
             fileobj.flush()
 
 
-
-if __name__ == '__main__':
+def start():
     DemocraticDaemon().start()
 

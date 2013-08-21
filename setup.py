@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(name='democraticd',
         version='0.1',
@@ -10,11 +10,20 @@ enforced democratic server.
 This daemon checks for GitHub pull requests and saves them to a database.
 When pull requests are approved, it rebuilds and installs the changed
 Debian packages.
-"""
+""",
         author='Tom Scholl',
         author_email='tom@dustyneuron.com',
         url='https://github.com/democraticd/democraticd',
         packages=['democraticd'],
+        package_data = {
+            '': ['README.md'],
+            },
+        entry_points = {
+            'console_scripts': [
+                'democraticd = democraticd.daemon:start',
+                'demod-client = democraticd.client:start',
+                ],
+            },
         classifiers=[
             'Development Status :: 2 - Pre-Alpha',
             'Environment :: Console',
