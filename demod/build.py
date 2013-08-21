@@ -36,6 +36,8 @@ def build(package, issue_id):
     run(['git', 'clone', pr.repo_git_url, package])
     
     time.sleep(5)
+    
+    
     print('build finished')
     
 if __name__ == '__main__':

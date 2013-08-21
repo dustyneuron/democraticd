@@ -149,9 +149,13 @@ class DemoDaemon:
                 return
                 
             elif command == 'list':
+                empty = True
                 for (repo, pr_list) in self.repo_dict.items():
                     for pr in pr_list:
                         fileobj.write(pr.pretty_str().encode())
+                        empty = False
+                if empty:
+                    fileobj.write('No pull requests\n'.encode())
 
             elif command.startswith('approve'):
                 issue_id = None
