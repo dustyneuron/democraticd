@@ -132,8 +132,8 @@ def fill_pull_requests(github_api, repo_dict):
                 raise Exception('No matching full pull request for ' + str(pr))
 
 
-def get_new_pull_requests(config, github_api):
-    notifications = github_api.get_new_notifications(mark_read=False)
+def get_new_pull_requests(config, github_api, mark_read=True):
+    notifications = github_api.get_new_notifications(mark_read=mark_read)
     if not notifications:
         return {}
     
