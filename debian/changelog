@@ -1,8 +1,11 @@
-python3-democraticd (0.1.dev1ubuntu1) UNRELEASED; urgency=low
+python3-democraticd (0.1.dev2) UNRELEASED; urgency=low
 
   * More build work
+  * build adds a git tag for each change
+  * build adds a git tag for each change
+  * Increment package version numbers properly
 
- -- Tom Scholl <tom@dustyneuron.com>  Thu, 22 Aug 2013 15:18:14 +0100
+ -- Tom Scholl <tom@dustyneuron.com>  Thu, 22 Aug 2013 16:47:57 +0100
 
 python3-democraticd (0.1.dev1) unstable; urgency=low
 
