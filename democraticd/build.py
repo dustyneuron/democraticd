@@ -78,7 +78,7 @@ class Builder:
             os.chdir(self.working_dir)
             shutil.rmtree(package)
         
-        print('Built package(s) OK in ' + working_dir)
+        print('Built package(s) OK in ' + self.working_dir)
         
 
 def build(package, issue_id):

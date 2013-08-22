@@ -149,67 +149,87 @@ class DemocraticDaemon:
         socket.sendall(help_message)
         fileobj = socket.makefile()
         while True:
-            line = fileobj.readline()
-            if not line:
-                print ("client disconnected")
-                break
-                
-            command = line.decode().strip().lower()
-            if command == 'stop':
-                print ("client told server to stop")
-                fileobj.write(('STOPPING SERVER\n').encode())
-                self.quit_event.set()
-                self.server.stop()
-                socket.shutdown(gevent.socket.SHUT_RDWR)
-                return
-                
-            elif command == 'list':
-                empty = True
-                for (repo, pr_list) in self.repo_dict.items():
-                    for pr in pr_list:
-                        fileobj.write(pr.pretty_str().encode())
-                        empty = False
-                if empty:
-                    fileobj.write('No pull requests\n'.encode())
+            try:
+                line = fileobj.readline()                    
+                if not line:
+                    print ("client disconnected")
+                    return
+                    
+                command = line.decode().strip().lower()
+                single_cmd = False
+                if command.startswith('$'):
+                    command = command[1:]
+                    single_cmd = True
+                    print('Received single command ' + repr(command))
+                    
+                if command == 'stop':
+                    print ("client told server to stop")
+                    fileobj.write(('STOPPING SERVER\n').encode())
+                    fileobj.flush()
+                    self.quit_event.set()
+                    self.server.stop()
+                    socket.shutdown(gevent.socket.SHUT_RDWR)
+                    return
+                    
+                elif command == 'list':
+                    empty = True
+                    for (repo, pr_list) in self.repo_dict.items():
+                        for pr in pr_list:
+                            fileobj.write(pr.pretty_str().encode())
+                            empty = False
+                    if empty:
+                        fileobj.write('No pull requests\n'.encode())
 
-            elif command.startswith('approve'):
-                r = re.match('approve\s+(?P<repo>\S+)\s+(?P<issue_id>\d+)\s*$', command)
-                issue_id = None
-                repo = None
-                if r:
-                    repo = r.group('repo')
-                    try:
-                        issue_id = int(r.group('issue_id'))
-                    except Exception as e:
-                        fileobj.write(('error parsing integer issue number\n' + str(e) + '\n').encode())
-                else:
-                    fileobj.write(('error - usage is "approve [repo] [issue_id]"\n').encode())
-                                        
-                found_pr = None
-                if issue_id and repo and repo in self.repo_dict:
-                    for pr in self.repo_dict[repo]:
-                        if pr.state == pr.state_idx('COMMENTED'):
-                            if pr.issue_id == issue_id:
-                                found_pr = pr
-                                break
-                                
-                if found_pr:
-                    fileobj.write(('PULL REQUEST APPROVED\n').encode())
-                    fileobj.write(found_pr.pretty_str().encode())
+                elif command.startswith('approve'):
+                    r = re.match('approve\s+(?P<repo>\S+)\s+(?P<issue_id>\d+)\s*$', command)
+                    issue_id = None
+                    repo = None
+                    if r:
+                        repo = r.group('repo')
+                        try:
+                            issue_id = int(r.group('issue_id'))
+                        except Exception as e:
+                            fileobj.write(('error parsing integer issue number\n' + str(e) + '\n').encode())
+                    else:
+                        fileobj.write(('error - usage is "approve [repo] [issue_id]"\n').encode())
+                                            
+                    found_pr = None
+                    if issue_id and repo and repo in self.repo_dict:
+                        for pr in self.repo_dict[repo]:
+                            if pr.state == pr.state_idx('COMMENTED'):
+                                if pr.issue_id == issue_id:
+                                    found_pr = pr
+                                    break
+                                    
+                    if found_pr:
+                        fileobj.write(('PULL REQUEST APPROVED\n').encode())
+                        fileobj.write(found_pr.pretty_str().encode())
+                        
+                        found_pr.set_state('APPROVED')
+                        self.save_pull_requests(found_pr.repo)
+                        self.build_queue.put((found_pr.repo, found_pr.key()))
+                        
+                    else:
+                        fileobj.write(('No pull request "' + str(repo) + '/issue #' + str(issue_id) + '" ready for merging\n').encode())
                     
-                    found_pr.set_state('APPROVED')
-                    self.save_pull_requests(found_pr.repo)
-                    self.build_queue.put((found_pr.repo, found_pr.key()))
-                    
                 else:
-                    fileobj.write(('No pull request "' + str(repo) + '/issue #' + str(issue_id) + '" ready for merging\n').encode())
-                
-            else:
-                fileobj.write(('Unknown command "' + command + '"\n').encode())
-                fileobj.write(help_message.encode())
-                
-            fileobj.flush()
-    
+                    fileobj.write(('Unknown command "' + command + '"\n').encode())
+                    fileobj.write(help_message.encode())
+                    
+                fileobj.flush()
+                if single_cmd:
+                    socket.shutdown(gevent.socket.SHUT_RDWR)
+                    return
+                    
+            except Exception as e:
+                print(e)
+                try:
+                    socket.shutdown(gevent.socket.SHUT_RDWR)
+                except Exception as e2:
+                    print(e2)
+                return
+
+
 def start():
     DemocraticDaemon().start()
     
