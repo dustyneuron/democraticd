@@ -8,9 +8,7 @@ import os.path
 import subprocess
 import functools
 import shutil
-
-from debian.deb822 import Deb822
-from debian.changelog import Changelog, Version
+import re
 
 def run(args):
     cmd = functools.reduce(lambda acc, x: acc + ' ' + x, args)
@@ -25,46 +23,10 @@ def get(args):
     r = subprocess.check_output(args, stderr=sys.stderr, stdout=sys.stdout)
     return r.decode()
         
-class ControlFile:
-    def __init__(self, f):
-        self.source = None
-        self.packages = []
-        
-        data = ''
-        for line in f:
-            data += line
-            if line.isspace():
-                if data.strip():
-                    parsed = Deb822(data)
-                    if 'source' in parsed:
-                        self.source = parsed
-                    else:
-                        self.packages.append(parsed)
-                data = ''
-                
-        if data.strip():
-            parsed = Deb822(data)
-            if 'source' in parsed:
-                self.source = parsed
-            else:
-                self.packages.append(parsed)
-
-def foo():
-    changelog = Changelog()
-    changelog.new_block(package='python-debian',
-            version=Version('0.1'),
-            distributions='unstable',
-            urgency='low',
-            author='James Westby <jw+debian@jameswestby.net>',
-            date='Thu,  3 Aug 2006 19:16:22 +0100',
-            )
-
-    changelog.add_change('');
-    changelog.add_change('  * Welcome to changelog.py');
-    changelog.add_change('');
-
-    print(changelog)
-
+def increment_version(v):
+    # assume version string ends in a number, and increment that
+    r = re.match('(?P<first>.*[^0-9])(?P<last>[0-9]+)$', v)
+    return r.group('first') + str(int(r.group('last')) + 1)
 
 def build(package, issue_id):
     print('build started (' + package + ', ' + issue_id + ')')
@@ -94,10 +56,9 @@ def build(package, issue_id):
     run(['git', 'fetch', pr.repo_git_url, pr.ref + ':refs/remotes/' + pr.username + '/' + pr.ref])
     run(['git', 'merge', pr.sha])
     
-    run(['git-dch', '--since', last_commit, '--meta', '--commit'])
-    with open('debian/changelog', 'rt') as f:
-        changelog = Changelog(f)
-    new_version = changelog.version.full_version
+    new_version = increment_version(last_version)
+    
+    run(['git-dch', '--since', last_commit, '--meta', '--commit', '-N', new_version])
     run(['git', 'tag', 'debian/' + new_version])
     
     run(['git', 'push', 'origin', '--tags'])

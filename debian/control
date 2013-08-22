@@ -11,7 +11,7 @@ X-Python3-Version: >= 3.3
 
 Package: python3-democraticd
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, python3-gevent, python3-debian
+Depends: ${misc:Depends}, ${python3:Depends}, python3-gevent, git-buildpackage
 Description: A democratic daemon
  A democratic daemon is the core system service that runs an
  enforced democratic server.
