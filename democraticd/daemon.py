@@ -13,6 +13,7 @@ import functools
 import sys
 import os.path
 import sysconfig
+import re
     
 class DemocraticDaemon:
     def __init__(self):
@@ -162,24 +163,24 @@ class DemocraticDaemon:
                     fileobj.write('No pull requests\n'.encode())
 
             elif command.startswith('approve'):
-                issue_id = None
-                try:
-                    issue_id = int(command[len('approve '):])
-                except Exception as e:
-                    fileobj.write(('error parsing integer issue number\n' + str(e) + '\n').encode())
-                    
+                r = re.match('approve\s+(?P<repo>\S+)\s+(?P<issue_id>\d+)', command)
+                if r:
+                    repo = r.group('repo')
+                    try:
+                        issue_id = int(r.group('issue_id'))
+                    except Exception as e:
+                        fileobj.write(('error parsing integer issue number\n' + str(e) + '\n').encode())
+                else:
+                    fileobj.write(('error - usage is "approve [repo] [issue_id]"\n').encode())
+                                        
                 found_pr = None
-                if issue_id:
-                    for pr in functools.reduce(lambda acc, x: acc + x, self.repo_dict.values()):
+                if issue_id and repo and repo in self.repo_dict:
+                    for pr in self.repo_dict[repo]:
                         if pr.state == pr.state_idx('COMMENTED'):
                             if pr.issue_id == issue_id:
                                 found_pr = pr
                                 break
-                
-                if self.build_greenlet and (not self.build_greenlet.ready()):
-                    fileobj.write(('Error - already merging a pull request\n').encode())
-                    found_pr = None
-                
+                                
                 if found_pr:
                     fileobj.write(('PULL REQUEST APPROVED\n').encode())
                     fileobj.write(found_pr.pretty_str().encode())
