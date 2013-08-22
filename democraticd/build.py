@@ -33,7 +33,7 @@ class Builder:
         r = subprocess.check_output(args, stderr=sys.stderr)
         return r.decode()
             
-    def build(package, issue_id):
+    def build(self, package, issue_id):
         print('build started (' + package + ', ' + issue_id + ')')
         
         config = democraticd.config.Config()
@@ -54,7 +54,8 @@ class Builder:
         os.chdir(self.working_dir)
         
         try:
-            self.run(['git', 'clone', 'git@github.com:' + github_config['username'] + '/' + package + '.git', package])
+            # Use https to use .git-credentials
+            self.run(['git', 'clone', 'https://github.com/' + github_config['username'] + '/' + package + '.git', package])
             os.chdir(os.path.join(self.working_dir, package))
             last_commit = self.get(['git', 'log', '-n', '1', '--pretty=format:%H']).strip()
             last_version = self.get(['git', 'tag', '--contains', last_commit]).strip()[len('debian/'):]
@@ -81,7 +82,7 @@ class Builder:
         
 
 def build(package, issue_id):
-    Build().build(package, issue_id)
+    Builder().build(package, issue_id)
     
 if __name__ == '__main__':
     build(sys.argv[1], sys.argv[2])
