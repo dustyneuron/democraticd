@@ -16,16 +16,20 @@ import sysconfig
 import re
     
 class DemocraticDaemon:
-    def __init__(self):
+    def __init__(self, debug_out=None, mark_read=True, run_builds=True):
         self.python = 'python' + sysconfig.get_python_version()[0]
         self.module_dir = '.'
         if sys.argv[0]:
             self.module_dir = os.path.join(os.path.dirname(sys.argv[0]), '..')
         self.module_dir = os.path.abspath(self.module_dir)
         
+        self.debug_out = debug_out
+        self.mark_read = mark_read
+        self.run_builds = run_builds
+        
         self.quit_event = gevent.event.Event()
         self.config = democraticd.config.Config()
-        self.github_api = self.config.create_github_api(self.quit_event)
+        self.github_api = self.config.create_github_api(self.quit_event, self.debug_out)
 
         self.server = gevent.server.StreamServer(
             ('localhost', self.config.port),
@@ -81,7 +85,7 @@ class DemocraticDaemon:
             self.repo_dict[repo] = self.config.read_pull_requests(repo)
 
         print('Getting new pull request notifications from GitHub API')
-        new_repo_dict = pullrequest.get_new_pull_requests(self.config, self.github_api)
+        new_repo_dict = pullrequest.get_new_pull_requests(self.config, self.github_api, self.mark_read)
         if new_repo_dict:
             for repo in self.repo_dict.keys():
                 if repo in new_repo_dict:
@@ -127,8 +131,11 @@ class DemocraticDaemon:
             pr.set_state('BUILDING')
             self.save_pull_requests(pr.repo)
             
-            self.build_greenlet = gevent.Greenlet.spawn(self._proc_build, cmd, pr)
-            print('Spawned builder')
+            if self.run_builds:
+                self.build_greenlet = gevent.Greenlet.spawn(self._proc_build, cmd, pr)
+                print('Spawned builder')
+            else:
+                print('Would have spawned builder, but run_builds=False')
             
             self.build_queue.task_done()
             

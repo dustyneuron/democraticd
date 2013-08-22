@@ -25,7 +25,7 @@ class GitHubAPI:
     json_methods = set(['PUT', 'POST'])
     base_url = 'api.github.com'
     
-    def __init__(self, username, password, quit_event):
+    def __init__(self, username, password, quit_event, log_file=None):
         self.username = username
         self.password = password
         self.next_notify_time = time.time()
@@ -33,9 +33,14 @@ class GitHubAPI:
         self.last_modified = {}
         self.conn_pool = None
         self.quit_event = quit_event
+        self.log_file = log_file
         
+    def log(self, data):
+        if self.log_file:
+            self.log_file.write(str(data))
+            
     def _api_call(self, url, method='GET', fields=None, headers={}):
-        print('_api_call(' + method + ', ' + url + ')')
+        log('_api_call(' + method + ', ' + url + ')')
         
         auth = bytes.decode(base64.b64encode((self.username + ':' + self.password).encode()))
         headers['Authorization'] = 'Basic %s' % auth
@@ -47,9 +52,9 @@ class GitHubAPI:
         if (fields != None) and (method in self.json_methods):
             headers['Content-Type'] = 'application/x-www-form-urlencoded'
                 
-        print(headers)
+        log(headers)
         if fields:
-            print(fields)
+            log(fields)
 
         if not self.conn_pool:
             self.conn_pool = urllib3.HTTPSConnectionPool(self.base_url, maxsize=1)
@@ -68,7 +73,9 @@ class GitHubAPI:
         if result.headers.get('last-modified'):
             self.last_modified[last_modified_key] = result.headers.get('last-modified')
         
-        print(result.headers)
+        log(result.headers)
+        log('result.data:\n' + result.data.decode('utf-8'))
+        
         return result
         
     def _return_json(self, result):
