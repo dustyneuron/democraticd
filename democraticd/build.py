@@ -62,6 +62,7 @@ def build(package, issue_id):
     run(['git', 'tag', 'debian/' + new_version])
     
     run(['git', 'push', 'origin', '--tags'])
+    run(['git', 'push', 'origin'])
     
     run(['dpkg-buildpackage', '-us', '-uc', '-b'])
     
