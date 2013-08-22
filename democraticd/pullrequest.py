@@ -124,14 +124,16 @@ def fill_pull_requests(github_api, repo_dict):
         
     for repo in repo_dict.keys():
         list_pull_requests = github_api.list_pull_requests(repo)
-        for pr in repo_dict[repo]:
+        for pr in repo_dict[repo][:]:
             if pr.state < pr.state_idx('FILLED'):
                 for full_pr in list_pull_requests:
                     if pr.pull_api_url == full_pr['url']:
                         pr.fill(full_pr)
                         break
             if pr.state < pr.state_idx('FILLED'):
-                raise Exception('No matching full pull request for ' + str(pr))
+                print('No matching full pull request for ' + str(pr) + ', deleting it')
+                repo_dict[repo].remove(pr)
+                
 
 
 def get_new_pull_requests(config, github_api, mark_read=True):
