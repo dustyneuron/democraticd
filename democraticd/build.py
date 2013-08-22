@@ -7,6 +7,7 @@ import os
 import os.path
 import subprocess
 import functools
+import shutil
 
 from debian.deb822 import Deb822
 from debian.changelog import Changelog, Version
@@ -17,6 +18,12 @@ def run(args):
     r = subprocess.call(args, stderr=sys.stderr, stdout=sys.stdout)
     if r != 0:
         raise Exception('"' + cmd + '" returned ' + str(r))
+        
+def get(args):
+    cmd = functools.reduce(lambda acc, x: acc + ' ' + x, args)
+    print('get: ' + cmd)
+    r = subprocess.check_output(args, stderr=sys.stderr, stdout=sys.stdout)
+    return r.decode()
         
 class ControlFile:
     def __init__(self, f):
@@ -79,22 +86,28 @@ def build(package, issue_id):
     print('Working directory is ' + working_dir)
     os.chdir(working_dir)
     
-    run(['git', 'clone', 'git@github.com:' + config['username'] + '/' package + '.git', package])
+    run(['git', 'clone', 'git@github.com:' + config['username'] + '/' + package + '.git', package])
     os.chdir(os.path.join(working_dir, package))
+    last_commit = get(['git', 'log', '-n', '1', '--pretty=format:%H']).strip()
+    last_version = get(['git', 'tag', '--contains', last_commit]).strip()[len('debian/'):]
     
-    run(['git', 'remote', 'add', pr.username, pr.repo_git_url])
-    run(['git', 'fetch', pr.username, pr.ref])
-    run(['git', 'checkout', pr.username + '/' + pr.ref])
-    run(['git', 'checkout', pr.sha])
+    run(['git', 'fetch', pr.repo_git_url, pr.ref + ':refs/remotes/' + pr.username + '/' + pr.ref])
+    run(['git', 'merge', pr.sha])
     
+    run(['git-dch', '--since', last_commit, '--meta', '--commit'])
+    with open('debian/changelog', 'rt') as f:
+        changelog = Changelog(f)
+    new_version = changelog.version.full_version
+    run(['git', 'tag', 'debian/' + new_version])
     
-    #run(['git-dch'])
+    run(['git', 'push', 'origin', '--tags'])
+    
     run(['dpkg-buildpackage', '-us', '-uc', '-b'])
     
-    time.sleep(5)
+    os.chdir('..')
+    shutil.rmtree(package)
     
-    
-    print('build finished')
+    print('Built package(s) OK in ' + working_dir)
     
 if __name__ == '__main__':
     build(sys.argv[1], sys.argv[2])

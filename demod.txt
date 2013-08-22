@@ -104,6 +104,8 @@ Updating locally-built debs:
     A tool called uupdate can do this (http://www.debian.org/doc/manuals/maint-guide/update.en.html#inspectnewupstream)
     I think 'uscan' can check + download new upstream versions if debian knows where they come from
 
+git-dpb:
+    looks similar to git-buildpackage
     
 git-buildpackage:
   Description: Suite to help with Debian packages in Git repositories
