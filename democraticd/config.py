@@ -59,9 +59,9 @@ class Config:
             config = json.loads(f.read())
         return config
         
-    def create_github_api(self, quit_event):
+    def create_github_api(self, quit_event, make_comments=True):
         config = self.get_github_config()
-        return github_api.GitHubAPI(config['username'], config['password'], quit_event, self.log)
+        return github_api.GitHubAPI(config['username'], config['password'], quit_event, self.log, make_comments)
 
     def read_pull_requests(self, repo):
         filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)

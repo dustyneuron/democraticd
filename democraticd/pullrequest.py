@@ -71,8 +71,9 @@ class PullRequest:
             s += '\t' + self.title + '\n'
             s += '\t' + self.description + '\n'
             s += '\t' + self.pull_api_url + '\n'
-            if self.state >= self.state_idx('COMMENTED'):
+            if hasattr(self, 'comment_id'):
                 s += '\tComment Id #' + str(self.comment_id) + '\n'
+                
         elif self.state >= self.state_idx('NEW'):
             s = 'Pull request "' + str(self.repo) + '", state ' + self.get_state() + '\n'
             s += '\t' + self.title + '\n'

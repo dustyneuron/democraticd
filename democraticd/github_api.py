@@ -25,7 +25,7 @@ class GitHubAPI:
     json_methods = set(['PUT', 'POST'])
     base_url = 'api.github.com'
     
-    def __init__(self, username, password, quit_event, log_func):
+    def __init__(self, username, password, quit_event, log_func, make_comments=True):
         self.username = username
         self.password = password
         self.next_notify_time = time.time()
@@ -34,6 +34,7 @@ class GitHubAPI:
         self.conn_pool = None
         self.quit_event = quit_event
         self.log_func = log_func
+        self.make_comments = make_comments
         
     def log(self, *args):
         self.log_func(*args)
@@ -124,17 +125,22 @@ class GitHubAPI:
         return data
         
     def create_pull_request_comment(self, pull_request):
-        url = ( '/repos/' + self.username + '/' + pull_request.repo +
-                '/issues/' + str(pull_request.issue_id) + '/comments')
-                
-        comment = ( "The democratic daemon thanks you for your contribution!\n"
-                    "Your change request is now up for voting - "
-                    "vote for it at [" + pull_request.vote_url + "](" + pull_request.vote_url + ")")
-        
-        result = self._api_call(url, 'POST', fields={'body': comment})
-        if result.status != 201:
-            raise GitHubError(str(result.status) + result.reason)
-        pull_request.set_comment_log(self._return_json(result))
-        result.release_conn()
-        
+        if self.make_comments:
+            url = ( '/repos/' + self.username + '/' + pull_request.repo +
+                    '/issues/' + str(pull_request.issue_id) + '/comments')
+                    
+            approve_cmd = '`demod-client approve ' + pull_request.repo + ' ' + str(pull_request.issue_id) + "`"
+            comment = """\
+Thanks you for contributing!
+Your change proposal can be approved by running """ + approve_cmd + """.
+Note that if you push any more changes to this branch, you'll lose
+approval/any votes your proposal had collected."""
+
+            result = self._api_call(url, 'POST', fields={'body': comment})
+            if result.status != 201:
+                raise GitHubError(str(result.status) + result.reason)
+            pull_request.set_comment_log(self._return_json(result))
+            result.release_conn()
+        else:
+            pull_request.set_state('COMMENTED')
         

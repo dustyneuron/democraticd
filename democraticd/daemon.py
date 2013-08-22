@@ -17,7 +17,7 @@ import sysconfig
 import re
     
 class DemocraticDaemon:
-    def __init__(self, debug_level=DebugLevel.ESSENTIAL, mark_read=True, run_builds=True):
+    def __init__(self, debug_level=DebugLevel.ESSENTIAL, mark_read=True, make_comments=True, run_builds=True):
         self.python = 'python' + sysconfig.get_python_version()[0]
         self.module_dir = '.'
         if sys.argv[0]:
@@ -30,7 +30,7 @@ class DemocraticDaemon:
         
         self.quit_event = gevent.event.Event()
         self.config = democraticd.config.Config(self.debug_level)
-        self.github_api = self.config.create_github_api(self.quit_event)
+        self.github_api = self.config.create_github_api(self.quit_event, make_comments)
 
         self.server = gevent.server.StreamServer(
             ('localhost', self.config.port),
@@ -213,8 +213,11 @@ class DemocraticDaemon:
 def start():
     DemocraticDaemon().start()
     
-def debug():
-    DemocraticDaemon(debug_level=DebugLevel.DEBUG, mark_read=False, run_builds=False).start()
+def debug(**keywords):
+    args = {}
+    args.update(debug_level=DebugLevel.DEBUG, mark_read=False, make_comments=False, run_builds=False)
+    args.update(keywords)
+    DemocraticDaemon(**args).start()
 
 if __name__ == "__main__":
     start()
