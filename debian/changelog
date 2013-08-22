@@ -1,3 +1,9 @@
+python3-democraticd (0.1.dev1ubuntu1) UNRELEASED; urgency=low
+
+  * More build work
+
+ -- Tom Scholl <tom@dustyneuron.com>  Thu, 22 Aug 2013 15:18:14 +0100
+
 python3-democraticd (0.1.dev1) unstable; urgency=low
 
   * Initial prototype release.
