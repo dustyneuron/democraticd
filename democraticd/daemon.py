@@ -173,7 +173,9 @@ class DemocraticDaemon:
                     fileobj.write('No pull requests\n'.encode())
 
             elif command.startswith('approve'):
-                r = re.match('approve\s+(?P<repo>\S+)\s+(?P<issue_id>\d+)', command)
+                r = re.match('approve\s+(?P<repo>\S+)\s+(?P<issue_id>\d+)\s*$', command)
+                issue_id = None
+                repo = None
                 if r:
                     repo = r.group('repo')
                     try:
@@ -200,7 +202,7 @@ class DemocraticDaemon:
                     self.build_queue.put((found_pr.repo, found_pr.key()))
                     
                 else:
-                    fileobj.write(('No pull request with id #' + str(issue_id) + ' ready for merging\n').encode())
+                    fileobj.write(('No pull request "' + str(repo) + '/issue #' + str(issue_id) + '" ready for merging\n').encode())
                 
             else:
                 fileobj.write(('Unknown command "' + command + '"\n').encode())
