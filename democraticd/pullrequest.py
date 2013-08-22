@@ -67,16 +67,18 @@ class PullRequest:
         
     def pretty_str(self):
         if self.state >= self.state_idx('FILLED'):
-            s = 'Pull request #' + str(self.issue_id) + ', state ' + self.get_state() + '\n'
+            s = 'Pull request "' + str(self.repo) + '/#' + str(self.issue_id) + '", state ' + self.get_state() + '\n'
             s += '\t' + self.title + '\n'
             s += '\t' + self.description + '\n'
             s += '\t' + self.pull_api_url + '\n'
             if self.state >= self.state_idx('COMMENTED'):
                 s += '\tComment Id #' + str(self.comment_id) + '\n'
-        else:
-            s = 'Pull request state ' + self.get_state() + '\n'
+        elif self.state >= self.state_idx('NEW'):
+            s = 'Pull request "' + str(self.repo) + '", state ' + self.get_state() + '\n'
             s += '\t' + self.title + '\n'
             s += '\t' + self.pull_api_url + '\n'
+        else:
+            s = 'Pull request state EMPTY'
         return s
 
                 
