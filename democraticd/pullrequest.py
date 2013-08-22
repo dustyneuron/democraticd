@@ -44,6 +44,7 @@ class PullRequest:
         
         self.issue_id = data['number']
         self.description = data['body']
+        self.username = data['head']['repo']['owner']['login']
         self.ref = data['head']['ref']
         self.sha = data['head']['sha']
         self.base_ref = data['base']['ref']

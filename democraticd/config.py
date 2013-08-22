@@ -48,9 +48,13 @@ class Config:
     def get_repo_set(self):
         return self.get_package_set().union(self.get_module_set())
         
-    def create_github_api(self, quit_event):
+    def get_github_config(self):
         with open(os.path.join(self.conf_dir, "github_api.json"), 'rt') as f:
             config = json.loads(f.read())
+        return config
+        
+    def create_github_api(self, quit_event):
+        config = self.get_github_config()
         return github_api.GitHubAPI(config['username'], config['password'], quit_event)
 
     def read_pull_requests(self, repo):

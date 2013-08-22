@@ -73,13 +73,18 @@ def build(package, issue_id):
     if not pr:
         raise Exception('No matching pull request found')
         
+    github_config = config.get_github_config()
+        
     working_dir = tempfile.mkdtemp()
     print('Working directory is ' + working_dir)
     os.chdir(working_dir)
     
-    run(['git', 'clone', pr.repo_git_url, package])
+    run(['git', 'clone', 'git@github.com:' + config['username'] + '/' package + '.git', package])
     os.chdir(os.path.join(working_dir, package))
-    run(['git', 'checkout', pr.ref])
+    
+    run(['git', 'remote', 'add', pr.username, pr.repo_git_url])
+    run(['git', 'fetch', pr.username, pr.ref])
+    run(['git', 'checkout', pr.username + '/' + pr.ref])
     run(['git', 'checkout', pr.sha])
     
     
