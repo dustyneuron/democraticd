@@ -1,5 +1,6 @@
 from democraticd import github_api
 from democraticd import pullrequest
+from democraticd.utils import DebugLevel
 
 import os
 import json
@@ -10,12 +11,17 @@ import json
 # Cross-platform is good, python3 support mandatory :P
 
 class Config:
-    def __init__(self):
+    def __init__(self, debug_level=DebugLevel.ESSENTIAL):
         self.conf_dir = "/home/tom/.demod/"
         self.packages_dir = os.path.join(self.conf_dir, "packages")
         self.pull_requests_dir = os.path.join(self.conf_dir, "pull-requests")
         self.json_extension = ".json"
         self.port = 9999
+        self.debug_level = debug_level
+        
+    def log(self, data, debug_level=DebugLevel.ESSENTIAL):
+        if self.debug_level >= debug_level:
+            print(data)
         
     def get_package_set(self):
         package_names = set([])
@@ -53,9 +59,9 @@ class Config:
             config = json.loads(f.read())
         return config
         
-    def create_github_api(self, quit_event, log_file=None):
+    def create_github_api(self, quit_event):
         config = self.get_github_config()
-        return github_api.GitHubAPI(config['username'], config['password'], quit_event, log_file)
+        return github_api.GitHubAPI(config['username'], config['password'], quit_event, self.log)
 
     def read_pull_requests(self, repo):
         filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)

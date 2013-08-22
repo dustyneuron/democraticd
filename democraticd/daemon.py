@@ -1,6 +1,7 @@
 import democraticd.config
 import democraticd.build
 from democraticd import pullrequest
+from democraticd.utils import DebugLevel
 
 import gevent
 import gevent.server
@@ -16,20 +17,20 @@ import sysconfig
 import re
     
 class DemocraticDaemon:
-    def __init__(self, debug_out=None, mark_read=True, run_builds=True):
+    def __init__(self, debug_level=DebugLevel.ESSENTIAL, mark_read=True, run_builds=True):
         self.python = 'python' + sysconfig.get_python_version()[0]
         self.module_dir = '.'
         if sys.argv[0]:
             self.module_dir = os.path.join(os.path.dirname(sys.argv[0]), '..')
         self.module_dir = os.path.abspath(self.module_dir)
         
-        self.debug_out = debug_out
+        self.debug_level = debug_level
         self.mark_read = mark_read
         self.run_builds = run_builds
         
         self.quit_event = gevent.event.Event()
-        self.config = democraticd.config.Config()
-        self.github_api = self.config.create_github_api(self.quit_event, self.debug_out)
+        self.config = democraticd.config.Config(self.debug_level)
+        self.github_api = self.config.create_github_api(self.quit_event)
 
         self.server = gevent.server.StreamServer(
             ('localhost', self.config.port),
@@ -39,11 +40,13 @@ class DemocraticDaemon:
         self.repo_dict = {}
         
         self.build_greenlet = None
-        
         self.build_queue = gevent.queue.JoinableQueue()
         
+    def log(self, *args):
+        self.config.log(*args)
+        
     def start(self):
-        print('Starting server on port 9999')
+        print('Starting server on port ' + str(self.config.port))
         self.server.start()
         
         gevent.Greenlet.spawn(self.start_builds)
@@ -207,6 +210,9 @@ class DemocraticDaemon:
     
 def start():
     DemocraticDaemon().start()
+    
+def debug():
+    DemocraticDaemon(debug_level=DebugLevel.DEBUG, mark_read=False, run_builds=False).start()
 
 if __name__ == "__main__":
     start()

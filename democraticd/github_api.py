@@ -1,4 +1,4 @@
-from democraticd.utils import iso_8601
+from democraticd.utils import iso_8601, DebugLevel
 
 import gevent
 import gevent.monkey
@@ -25,7 +25,7 @@ class GitHubAPI:
     json_methods = set(['PUT', 'POST'])
     base_url = 'api.github.com'
     
-    def __init__(self, username, password, quit_event, log_file=None):
+    def __init__(self, username, password, quit_event, log_func):
         self.username = username
         self.password = password
         self.next_notify_time = time.time()
@@ -33,14 +33,13 @@ class GitHubAPI:
         self.last_modified = {}
         self.conn_pool = None
         self.quit_event = quit_event
-        self.log_file = log_file
+        self.log_func = log_func
         
-    def log(self, data):
-        if self.log_file:
-            self.log_file.write(str(data))
+    def log(self, *args):
+        self.log_func(*args)
             
     def _api_call(self, url, method='GET', fields=None, headers={}):
-        log('_api_call(' + method + ', ' + url + ')')
+        self.log('_api_call(' + method + ', ' + url + ')')
         
         auth = bytes.decode(base64.b64encode((self.username + ':' + self.password).encode()))
         headers['Authorization'] = 'Basic %s' % auth
@@ -52,9 +51,9 @@ class GitHubAPI:
         if (fields != None) and (method in self.json_methods):
             headers['Content-Type'] = 'application/x-www-form-urlencoded'
                 
-        log(headers)
+        self.log(headers, DebugLevel.INFO)
         if fields:
-            log(fields)
+            self.log(fields, DebugLevel.INFO)
 
         if not self.conn_pool:
             self.conn_pool = urllib3.HTTPSConnectionPool(self.base_url, maxsize=1)
@@ -73,8 +72,11 @@ class GitHubAPI:
         if result.headers.get('last-modified'):
             self.last_modified[last_modified_key] = result.headers.get('last-modified')
         
-        log(result.headers)
-        log('result.data:\n' + result.data.decode('utf-8'))
+        self.log(result.headers, DebugLevel.INFO)
+        if result.data:
+            self.log('result.data:\n' +
+                json.dumps(json.loads(result.data.decode('utf-8')), sort_keys=True, indent=4),
+                DebugLevel.DEBUG)
         
         return result
         
@@ -90,7 +92,7 @@ class GitHubAPI:
         current_time = time.time()
         if self.next_notify_time > current_time:
             sleep_time = int(self.next_notify_time - current_time)
-            print('Sleeping for ' + str(sleep_time) + ' secs because of X-poll-interval')
+            self.log('Sleeping for ' + str(sleep_time) + ' secs because of X-poll-interval')
             if self.quit_event.wait(sleep_time):
                 return []
             
