@@ -58,7 +58,7 @@ class Config:
         pr_list = []
         with open(filename, 'rt') as f:
             data = json.loads(f.read())
-        for (issue_id, d) in data.items():
+        for d in data:
             pr = pullrequest.PullRequest()
             for (k, v) in d.items():
                 pr.__dict__[k] = v
@@ -68,9 +68,9 @@ class Config:
 
     def write_pull_requests(self, repo, pr_list):
         filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)
-        data = {}
+        data = []
         for pr in pr_list:
-            data[pr.issue_id] = vars(pr)
+            data.append(vars(pr))
             
         with open(filename, 'wt') as f:
             f.write(json.dumps(data, sort_keys=True, indent=4))

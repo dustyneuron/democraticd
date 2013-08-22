@@ -4,6 +4,7 @@ import time
 import sys
 import tempfile
 import os
+import os.path
 import subprocess
 import functools
 
@@ -33,6 +34,11 @@ def build(package, issue_id):
     os.chdir(working_dir)
     
     run(['git', 'clone', pr.repo_git_url, package])
+    os.chdir(os.path.join(working_dir, package))
+    run(['git', 'checkout', pr.ref])
+    run(['git', 'checkout', pr.sha])
+    #run(['git-dch'])
+    run(['dpkg-buildpackage', '-us', '-uc', '-b'])
     
     time.sleep(5)
     
