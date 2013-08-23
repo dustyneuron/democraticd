@@ -8,6 +8,7 @@ class PullRequest:
         3: 'COMMENTED',
         4: 'APPROVED',
         5: 'BUILDING',
+        6: 'INSTALLING',
         }
             
     def __init__(self, data=None):

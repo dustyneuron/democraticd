@@ -13,20 +13,16 @@ import gevent.queue
 import functools
 import sys
 import os.path
-import sysconfig
 import re
     
 class DemocraticDaemon:
-    def __init__(self, debug_level=DebugLevel.ESSENTIAL, mark_read=True, make_comments=True, run_builds=True):
-        self.python = 'python' + sysconfig.get_python_version()[0]
-        self.module_dir = '.'
-        if sys.argv[0]:
-            self.module_dir = os.path.join(os.path.dirname(sys.argv[0]), '..')
-        self.module_dir = os.path.abspath(self.module_dir)
-        
+    def __init__(self, debug_level=DebugLevel.ESSENTIAL, mark_read=True,
+            make_comments=True, run_builds=True, install_packages=True):
+                
         self.debug_level = debug_level
         self.mark_read = mark_read
         self.run_builds = run_builds
+        self.install_packages = install_packages
         
         self.quit_event = gevent.event.Event()
         self.config = democraticd.config.Config(self.debug_level)
@@ -105,9 +101,13 @@ class DemocraticDaemon:
         
         
     def _proc_build(self, cmd, pr):
-        gevent.subprocess.call(cmd, cwd=self.module_dir)
+        gevent.subprocess.call(cmd)
         print('build subprocess.call returned')
-        # pr.set_state(built)?
+        pr.set_state('INSTALLING')
+        if self.install_packages:
+            #gevent.subprocess.call(['demod-install', '])
+            # TODO: implement installing deb packages
+        
         self.build_greenlet.kill()
         raise Exception('this code should never be called')
         
@@ -122,11 +122,8 @@ class DemocraticDaemon:
             idx = pullrequest.find_pull_request_idx(self.repo_dict[repo], key)
             pr = self.repo_dict[repo][idx]
             
-            # TODO: find a cleaner way to spawn build process
             cmd = [
-                self.python,
-                '-m',
-                'democraticd.build',
+                'demod-build',
                 str(pr.repo),
                 str(pr.issue_id)
                 ]
@@ -235,7 +232,8 @@ def start():
     
 def debug(**keywords):
     args = {}
-    args.update(debug_level=DebugLevel.DEBUG, mark_read=False, make_comments=False, run_builds=False)
+    args.update(debug_level=DebugLevel.DEBUG, mark_read=False, make_comments=False,
+        run_builds=False, install_packages=False)
     args.update(keywords)
     DemocraticDaemon(**args).start()
 

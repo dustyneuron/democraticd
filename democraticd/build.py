@@ -73,18 +73,28 @@ class Builder:
             
             self.run(['dpkg-buildpackage', '-us', '-uc', '-b'])
         except:
+            os.chdir('/')
+            shutil.rmtree(self.working_dir)
             raise
-        finally:        
-            os.chdir(self.working_dir)
-            shutil.rmtree(package)
-        
+          
+        os.chdir(self.working_dir)
+        shutil.rmtree(package)
         print('Built package(s) OK in ' + self.working_dir)
+        files = os.listdir(self.working_dir)
+        for f in files:
+            if re.match('.*\.deb$', f):
+                src = os.path.join(self.working_dir, f)
+                dest = os.path.join(config.get_deb_directory(rp.repo), f)
+                print('Copying ' + src + ' to ' + dest)
+                shutil.copy(src, dest)
+                
+        os.chdir('/')
+        shutil.rmtree(self.working_dir)
         
-
-def build(package, issue_id):
-    Builder().build(package, issue_id)
+def start():
+    Builder().build(sys.argv[1], sys.argv[2])
     
 if __name__ == '__main__':
-    build(sys.argv[1], sys.argv[2])
+    start()
 
 

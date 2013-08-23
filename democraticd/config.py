@@ -9,15 +9,23 @@ import json
 # Sqlite would work, but a schema-less solution is best
 # python-lockfile? python-zc.lockfile? lockfile-progs?
 # Cross-platform is good, python3 support mandatory :P
+#
+# OR: just pass the PR data via pipes etc to build/voting systems
+# - They don't need write access
 
 class Config:
     def __init__(self, debug_level=DebugLevel.ESSENTIAL):
         self.conf_dir = "/home/tom/.demod/"
         self.packages_dir = os.path.join(self.conf_dir, "packages")
+        self.debs_dir = os.path.join(self.conf_dir, "debs")
         self.pull_requests_dir = os.path.join(self.conf_dir, "pull-requests")
         self.json_extension = ".json"
         self.port = 9999
         self.debug_level = debug_level
+        
+        os.makedirs(self.packages_dir, exist_ok=True)
+        os.makedirs(self.debs_dir, exist_ok=True)
+        os.makedirs(self.pull_requests_dir, exist_ok=True)
         
     def log(self, data, debug_level=DebugLevel.ESSENTIAL):
         if self.debug_level >= debug_level:
@@ -84,6 +92,10 @@ class Config:
             
         with open(filename, 'wt') as f:
             f.write(json.dumps(data, sort_keys=True, indent=4))
-        
 
+    def get_deb_directory(self, repo):
+        d = os.path.join(self.debs_dir, repo + '/')
+        os.makedirs(d, exist_ok=True)
+        return d
+        
 
