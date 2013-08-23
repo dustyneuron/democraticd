@@ -12,6 +12,7 @@ class PullRequest:
         }
             
     def __init__(self, data=None):
+        self.needs_update = False
         if data:
             self.repo = data['repository']['name']
             self.title = data['subject']['title']
@@ -38,6 +39,9 @@ class PullRequest:
     
     def is_more_recent_than(self, pr):
         return (self.state > pr.state)
+        
+    def notify_update(self):
+        self.needs_update = True
         
     def fill(self, data):
         if data['base']['repo']['name'] != self.repo:

@@ -16,11 +16,13 @@ def find_pull_request_idx(pr_list, key):
 def update_pull_request_list(old_rp_list, new_rp_list):
     new_list = list(old_rp_list)
     for new_rp in new_rp_list:
-        idx = find_pull_request_idx(old_rp_list, new_rp.key())
+        idx = find_pull_request_idx(new_list, new_rp.key())
         if idx == -1:
             new_list.append(new_rp)
         elif new_rp.is_more_recent_than(old_rp_list[idx]):
-            old_rp_list[idx] = new_rp
+            new_list[idx] = new_rp
+        else:
+            new_list[idx].notify_update()
             
     return new_list
 
@@ -108,36 +110,34 @@ class PullRequestDB:
         return self.create_pull_requests(notifications)
 
 
-    def fill_pull_requests(self, github_api):
-        need_fill = False
-        for pr in self.pull_requests():
-            if pr.state < pr.state_idx('FILLED'):
-                need_fill = True
-                break
-        if not need_fill:
-            return
-            
+    def fill_pull_requests(self, github_api):            
         for repo in self.repos():
-            list_pull_requests = github_api.list_pull_requests(repo)
+            need_fill = False
             for pr in self.pull_requests(repo):
-                found_new_pr = None
-                for full_pr in list_pull_requests:
-                    if pr.pull_api_url == full_pr['url']:
-                        found_new_pr = full_pr
-                        break
-
-                if found_new_pr:
-                    if pr.state < pr.state_idx('FILLED'):
-                        pr.fill(found_new_pr)
-                    if found_new_pr['state'] != 'open':
-                        pr.set_state('DONE')
-                        pr.error = found_new_pr['state']
-
-                if pr.state < pr.state_idx('FILLED'):
-                    pr.set_state('DONE')
-                    pr.error = 'No matching full pull request, still in state ' + pr.get_state()
+                if (pr.state < pr.state_idx('FILLED')) or pr.needs_update:
+                    need_fill = True
+                    break
                     
-            self.write_pull_requests(repo)
+            if need_fill:
+                list_pull_requests = github_api.list_pull_requests(repo)
+                for pr in self.pull_requests(repo):
+                    found_new_pr = None
+                    for full_pr in list_pull_requests:
+                        if pr.pull_api_url == full_pr['url']:
+                            found_new_pr = full_pr
+                            break
+
+                    if found_new_pr:
+                        if pr.state < pr.state_idx('FILLED'):
+                            pr.fill(found_new_pr)
+                        if found_new_pr['state'] != 'open':
+                            pr.set_state('DONE')
+                            pr.error = 'Pull request marked as ' + repr(found_new_pr['state'])
+                    else:
+                        pr.error = 'Pull request deleted whilst in state ' + pr.get_state()
+                        pr.set_state('DONE')
+                        
+                self.write_pull_requests(repo)
 
     def comment_on_pull_requests(self, github_api):
         for repo in self.repos():
