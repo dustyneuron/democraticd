@@ -1,5 +1,5 @@
 import democraticd.config
-import democraticd.pullrequest as pullrequest
+from democraticd.pullrequest import PullRequest
 
 import time
 import sys
@@ -41,7 +41,7 @@ class Builder:
         for line in sys.stdin:
             data += line
         dic = json.loads(data)
-        pr = pullrequest.PullRequest()            
+        pr = PullRequest()            
         for (k, v) in dic.items():
             pr.__dict__[k] = v
             print('build pr > ' + str(k) + ' = ' + str(v))

@@ -1,6 +1,6 @@
 import democraticd.config
 import democraticd.build
-from democraticd import pullrequest
+import democraticd.pr_db
 from democraticd.utils import DebugLevel
 
 import gevent
@@ -20,12 +20,13 @@ class DemocraticDaemon:
             make_comments=True, run_builds=True, install_packages=True):
                 
         self.debug_level = debug_level
-        self.mark_read = mark_read
         self.run_builds = run_builds
         self.install_packages = install_packages
         
         self.quit_event = gevent.event.Event()
-        self.config = democraticd.config.Config(self.debug_level)
+        
+        self.config = democraticd.config.Config(debug_level=self.debug_level, mark_read = mark_read)
+        
         self.github_api = self.config.create_github_api(self.quit_event, make_comments)
 
         self.server = gevent.server.StreamServer(
@@ -33,7 +34,7 @@ class DemocraticDaemon:
             lambda sock, addr: self.command_server(sock, addr)
             )
         
-        self.repo_dict = {}
+        self.pr_db  = democraticd.pr_db.PullRequestDB(self.config)
         
         self.build_greenlet = None
         self.build_queue = gevent.queue.JoinableQueue()
@@ -49,14 +50,14 @@ class DemocraticDaemon:
         
         # Queue any builds that didn't get run last time
         for repo in self.config.get_repo_set():
-            self.repo_dict[repo] = self.config.read_pull_requests(repo)
-            for pr in self.repo_dict[repo]:
+            self.pr_db.read_pull_requests(repo)
+            for pr in self.pr_db.pull_requests(repo):
                 if pr.state == pr.state_idx('APPROVED'):
                     self.build_queue.put((pr.repo, pr.key()))
         
         # main GitHub loop, synchronous so we stay within rate limits
         while not self.quit_event.is_set():
-            self.do_github_actions()
+            self.pr_db.do_github_actions(self.github_api)
             
         print('Shutdown: waiting for all pending builds to have started')
         self.build_queue.join()
@@ -66,38 +67,6 @@ class DemocraticDaemon:
             self.build_greenlet.join()
         
         print('Shutdown complete')
-
-
-    def save_pull_requests(self, single_repo=None):
-        print('Saving pull requests')
-        if single_repo:
-            self.config.write_pull_requests(single_repo, self.repo_dict[single_repo])
-        else:
-            for (repo, pr_list) in self.repo_dict.items():
-                self.config.write_pull_requests(repo, pr_list)
-
-
-    def do_github_actions(self):
-        print('At top of daemon loop')
-        for repo in self.config.get_repo_set():
-            print('Reading saved pull requests for "' + str(repo) + '"')
-            self.repo_dict[repo] = self.config.read_pull_requests(repo)
-
-        print('Getting new pull request notifications from GitHub API')
-        new_repo_dict = pullrequest.get_new_pull_requests(self.config, self.github_api, self.mark_read)
-        if new_repo_dict:
-            for repo in self.repo_dict.keys():
-                if repo in new_repo_dict:
-                    self.repo_dict[repo] = pullrequest.update_pull_request_list(self.repo_dict[repo], new_repo_dict[repo])
-        self.save_pull_requests()
-                    
-        print('Filling any pull requests if needed')
-        pullrequest.fill_pull_requests(self.github_api, self.repo_dict)
-        self.save_pull_requests()
-                        
-        print('Commenting on pull requests')
-        pullrequest.comment_on_pull_requests(self.github_api, self.repo_dict)
-        self.save_pull_requests()
         
         
     def build_thread(self, pr):
@@ -121,11 +90,10 @@ class DemocraticDaemon:
                 print('Trying to spawn new builder, waiting for current one to finish')
                 self.build_greenlet.join()
             
-            idx = pullrequest.find_pull_request_idx(self.repo_dict[repo], key)
-            pr = self.repo_dict[repo][idx]
+            pr = self.pr_db.find_pull_request(repo, key)
             
             pr.set_state('BUILDING')
-            self.save_pull_requests(pr.repo)
+            self.pr_db.write_pull_requests(pr.repo)
             
             if self.run_builds:
                 self.build_greenlet = gevent.Greenlet.spawn(self.build_thread, pr)
@@ -166,8 +134,8 @@ class DemocraticDaemon:
                     
                 elif command == 'list':
                     empty = True
-                    for (repo, pr_list) in self.repo_dict.items():
-                        for pr in pr_list:
+                    for repo in self.pr_db.repos():
+                        for pr in self.pr_db.pull_requests(repo):
                             fileobj.write(pr.pretty_str().encode())
                             empty = False
                     if empty:
@@ -187,8 +155,8 @@ class DemocraticDaemon:
                         fileobj.write(('error - usage is "approve [repo] [issue_id]"\n').encode())
                                             
                     found_pr = None
-                    if issue_id and repo and repo in self.repo_dict:
-                        for pr in self.repo_dict[repo]:
+                    if issue_id and repo and repo in self.pr_db.repos():
+                        for pr in self.pr_db.pull_requests(repo):
                             if pr.state == pr.state_idx('COMMENTED'):
                                 if pr.issue_id == issue_id:
                                     found_pr = pr
@@ -199,7 +167,7 @@ class DemocraticDaemon:
                         fileobj.write(found_pr.pretty_str().encode())
                         
                         found_pr.set_state('APPROVED')
-                        self.save_pull_requests(found_pr.repo)
+                        self.pr_db.write_pull_requests(found_pr.repo)
                         self.build_queue.put((found_pr.repo, found_pr.key()))
                         
                     else:

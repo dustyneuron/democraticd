@@ -1,5 +1,4 @@
 from democraticd import github_api
-from democraticd import pullrequest
 from democraticd.utils import DebugLevel
 
 import os
@@ -16,7 +15,7 @@ import sys
 # - They don't need write access
 
 class Config:
-    def __init__(self, debug_level=DebugLevel.ESSENTIAL):
+    def __init__(self, debug_level=DebugLevel.ESSENTIAL, mark_read = True):
         self.conf_dir = "/home/tom/.demod/"
         self.packages_dir = os.path.join(self.conf_dir, "packages")
         self.debs_dir = os.path.join(self.conf_dir, "debs")
@@ -24,6 +23,7 @@ class Config:
         self.json_extension = ".json"
         self.port = 9999
         self.debug_level = debug_level
+        self.mark_read = mark_read
         
         os.makedirs(self.packages_dir, exist_ok=True)
         os.makedirs(self.debs_dir, exist_ok=True)
@@ -91,27 +91,8 @@ class Config:
         config = self.get_github_config()
         return github_api.GitHubAPI(config['username'], config['password'], quit_event, self.log, make_comments)
 
-    def read_pull_requests(self, repo):
-        filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)
-        pr_list = []
-        with open(filename, 'rt') as f:
-            data = json.loads(f.read())
-        for d in data:
-            pr = pullrequest.PullRequest()
-            for (k, v) in d.items():
-                pr.__dict__[k] = v
-            pr_list.append(pr)
-            
-        return pr_list
-
-    def write_pull_requests(self, repo, pr_list):
-        filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)
-        data = []
-        for pr in pr_list:
-            data.append(vars(pr))
-            
-        with open(filename, 'wt') as f:
-            f.write(json.dumps(data, sort_keys=True, indent=4))
+    def get_pull_requests_filename(self, repo):
+        return os.path.join(self.pull_requests_dir, repo + self.json_extension)
 
     def get_deb_directory(self, repo):
         d = os.path.join(self.debs_dir, repo + '/')
