@@ -120,21 +120,34 @@ class PullRequestDB:
         for repo in self.repos():
             list_pull_requests = github_api.list_pull_requests(repo)
             for pr in self.pull_requests(repo):
-                if pr.state < pr.state_idx('FILLED'):
-                    for full_pr in list_pull_requests:
-                        if pr.pull_api_url == full_pr['url']:
-                            pr.fill(full_pr)
-                            break
-                if pr.state < pr.state_idx('FILLED'):
-                    print('No matching full pull request for ' + str(pr) + ', deleting it')
-                    self.repo_dict[repo].remove(pr)
+                found_new_pr = None
+                for full_pr in list_pull_requests:
+                    if pr.pull_api_url == full_pr['url']:
+                        found_new_pr = full_pr
+                        break
 
-    def comment_on_pull_requests(self, github_api):    
-        for pr in self.pull_requests():
-            if pr.state == pr.state_idx('FILLED'):
-                # Would interact with db at this point, the vote url needs to be live
-                pr.set_vote_url()
-                github_api.create_pull_request_comment(pr)
+                if found_new_pr:
+                    if pr.state < pr.state_idx('FILLED'):
+                        pr.fill(found_new_pr)
+                    if found_new_pr['state'] != 'open':
+                        pr.set_state('DONE')
+                        pr.error = found_new_pr['state']
+
+                if pr.state < pr.state_idx('FILLED'):
+                    pr.set_state('DONE')
+                    pr.error = 'No matching full pull request, still in state ' + pr.get_state()
+                    
+            self.write_pull_requests(repo)
+
+    def comment_on_pull_requests(self, github_api):
+        for repo in self.repos():
+            for pr in self.pull_requests(repo):
+                if pr.state == pr.state_idx('FILLED'):
+                    # Would interact with db at this point, the vote url needs to be live
+                    pr.set_vote_url()
+                    github_api.create_pull_request_comment(pr)
+            
+            self.write_pull_requests(repo)
 
     def do_github_actions(self, github_api):
         
@@ -149,13 +162,12 @@ class PullRequestDB:
             for repo in self.repos():
                 if repo in new_repo_dict:
                     self.repo_dict[repo] = update_pull_request_list(self.repo_dict[repo], new_repo_dict[repo])
-        self.write_pull_requests()
+                    self.write_pull_requests(repo)
                     
         print('Filling any pull requests if needed')
         self.fill_pull_requests(github_api)
-        self.write_pull_requests()
                         
         print('Commenting on pull requests')
         self.comment_on_pull_requests(github_api)
-        self.write_pull_requests()
+        
 
