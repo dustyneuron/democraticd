@@ -18,7 +18,7 @@ class GitHubError(Exception):
         self.value = value
     
     def __str__(self):
-        return repr.repr(self.value)
+        return repr(self.value)
         
 
 class GitHubAPI:

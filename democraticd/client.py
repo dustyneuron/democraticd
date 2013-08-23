@@ -17,8 +17,12 @@ def start():
         
     if not single_cmd:
         print('Connecting to the democratic daemon on port ' + str(config.port) + '... ', end='')
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('localhost', config.port))
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('localhost', config.port))
+    except:
+        print('')
+        raise
     if not single_cmd:
         print('ok')
     
