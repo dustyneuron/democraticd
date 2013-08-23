@@ -21,7 +21,8 @@ Debian packages.
         entry_points = {
             'console_scripts': [
                 'democraticd = democraticd.daemon:start',
-                'demod-client = democraticd.client:start',
+                'demod = democraticd.client:start',
+                'demod-build = democraticd.build:start',
                 ],
             },
         classifiers=[

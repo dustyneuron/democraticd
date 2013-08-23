@@ -1,4 +1,5 @@
 import democraticd.config
+from democraticd.pullrequest import PullRequest
 
 import time
 import sys
@@ -9,6 +10,7 @@ import subprocess
 import functools
 import shutil
 import re
+import json
 
 def increment_version(v):
     # assume version string ends in a number, and increment that
@@ -33,20 +35,18 @@ class Builder:
         r = subprocess.check_output(args, stderr=sys.stderr)
         return r.decode()
             
-    def build(self, package, issue_id):
-        print('build started (' + package + ', ' + issue_id + ')')
+    def build(self, ):
+        print('build started')
+        data = ''
+        for line in sys.stdin:
+            data += line
+        dic = json.loads(data)
+        pr = PullRequest()            
+        for (k, v) in dic.items():
+            pr.__dict__[k] = v
+            print('build pr > ' + str(k) + ' = ' + str(v))
         
-        config = democraticd.config.Config()
-        pr_list = config.read_pull_requests(package)
-        found_pr = None
-        for pr in pr_list:
-            if (pr.state == pr.state_idx('BUILDING')) and (pr.issue_id == int(issue_id)):
-                found_pr = pr
-                break
-        pr = found_pr
-        if not pr:
-            raise Exception('No matching pull request found')
-            
+        config = democraticd.config.Config()            
         github_config = config.get_github_config()
             
         self.working_dir = tempfile.mkdtemp()
@@ -55,8 +55,8 @@ class Builder:
         
         try:
             # Use https to use .git-credentials
-            self.run(['git', 'clone', 'https://github.com/' + github_config['username'] + '/' + package + '.git', package])
-            os.chdir(os.path.join(self.working_dir, package))
+            self.run(['git', 'clone', 'https://github.com/' + github_config['username'] + '/' + pr.repo + '.git', pr.repo])
+            os.chdir(os.path.join(self.working_dir, pr.repo))
             last_commit = self.get(['git', 'log', '-n', '1', '--pretty=format:%H']).strip()
             last_version = self.get(['git', 'tag', '--contains', last_commit]).strip()[len('debian/'):]
             
@@ -73,18 +73,28 @@ class Builder:
             
             self.run(['dpkg-buildpackage', '-us', '-uc', '-b'])
         except:
+            os.chdir('/')
+            shutil.rmtree(self.working_dir)
             raise
-        finally:        
-            os.chdir(self.working_dir)
-            shutil.rmtree(package)
+          
+        os.chdir(self.working_dir)
+        shutil.rmtree(pr.repo)
+        print('Built package(s) OK in ' + self.working_dir)
+        files = os.listdir(self.working_dir)
+        for f in files:
+            if re.match('.*\.deb$', f):
+                src = os.path.join(self.working_dir, f)
+                dest = os.path.join(config.get_deb_directory(pr.repo), f)
+                print('Copying ' + src + ' to ' + dest)
+                shutil.copy(src, dest)
+                
+        os.chdir('/')
+        shutil.rmtree(self.working_dir)
         
-        print('Built package(s) OK in ' + working_dir)
-        
-
-def build(package, issue_id):
-    Builder().build(package, issue_id)
+def start():
+    Builder().build()
     
 if __name__ == '__main__':
-    build(sys.argv[1], sys.argv[2])
+    start()
 
 

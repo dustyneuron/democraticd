@@ -1,23 +1,51 @@
 from democraticd import github_api
-from democraticd import pullrequest
 from democraticd.utils import DebugLevel
 
 import os
 import json
+import sysconfig
+import sys
 
 # TODO: file locking for safe IPC e.g. with build system
 # Sqlite would work, but a schema-less solution is best
 # python-lockfile? python-zc.lockfile? lockfile-progs?
 # Cross-platform is good, python3 support mandatory :P
+#
+# OR: just pass the PR data via pipes etc to build/voting systems
+# - They don't need write access
 
 class Config:
-    def __init__(self, debug_level=DebugLevel.ESSENTIAL):
+    def __init__(self, debug_level=DebugLevel.ESSENTIAL, mark_read = True):
         self.conf_dir = "/home/tom/.demod/"
         self.packages_dir = os.path.join(self.conf_dir, "packages")
+        self.debs_dir = os.path.join(self.conf_dir, "debs")
         self.pull_requests_dir = os.path.join(self.conf_dir, "pull-requests")
         self.json_extension = ".json"
         self.port = 9999
         self.debug_level = debug_level
+        self.mark_read = mark_read
+        
+        os.makedirs(self.packages_dir, exist_ok=True)
+        os.makedirs(self.debs_dir, exist_ok=True)
+        os.makedirs(self.pull_requests_dir, exist_ok=True)
+        
+        self.python = 'python' + sysconfig.get_python_version()[0]
+        self.module_dir = '.'
+        if sys.argv[0]:
+            self.module_dir = os.path.join(os.path.dirname(sys.argv[0]), '..')
+        self.module_dir = os.path.abspath(self.module_dir)
+        
+    def run_build(self, pr, subprocess):
+        cmd = [self.python, '-m', 'democraticd.build']
+        self.log('Popen ' + ' '.join(cmd))
+        p = subprocess.Popen(cmd, cwd=self.module_dir, stdin=subprocess.PIPE)
+        p.stdin.write(json.dumps(vars(pr), sort_keys=True, indent=4).encode())
+        p.stdin.close()
+        return p.wait()
+        
+    def run_install(self, pr, subprocess):
+        print('TODO: implement deb install')
+        return 0
         
     def log(self, data, debug_level=DebugLevel.ESSENTIAL):
         if self.debug_level >= debug_level:
@@ -63,27 +91,12 @@ class Config:
         config = self.get_github_config()
         return github_api.GitHubAPI(config['username'], config['password'], quit_event, self.log, make_comments)
 
-    def read_pull_requests(self, repo):
-        filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)
-        pr_list = []
-        with open(filename, 'rt') as f:
-            data = json.loads(f.read())
-        for d in data:
-            pr = pullrequest.PullRequest()
-            for (k, v) in d.items():
-                pr.__dict__[k] = v
-            pr_list.append(pr)
-            
-        return pr_list
+    def get_pull_requests_filename(self, repo):
+        return os.path.join(self.pull_requests_dir, repo + self.json_extension)
 
-    def write_pull_requests(self, repo, pr_list):
-        filename = os.path.join(self.pull_requests_dir, repo + self.json_extension)
-        data = []
-        for pr in pr_list:
-            data.append(vars(pr))
-            
-        with open(filename, 'wt') as f:
-            f.write(json.dumps(data, sort_keys=True, indent=4))
+    def get_deb_directory(self, repo):
+        d = os.path.join(self.debs_dir, repo + '/')
+        os.makedirs(d, exist_ok=True)
+        return d
         
-
 
