@@ -4,6 +4,8 @@ from democraticd.utils import DebugLevel
 
 import os
 import json
+import sysconfig
+import sys
 
 # TODO: file locking for safe IPC e.g. with build system
 # Sqlite would work, but a schema-less solution is best
@@ -26,6 +28,19 @@ class Config:
         os.makedirs(self.packages_dir, exist_ok=True)
         os.makedirs(self.debs_dir, exist_ok=True)
         os.makedirs(self.pull_requests_dir, exist_ok=True)
+        
+        self.python = 'python' + sysconfig.get_python_version()[0]
+        self.module_dir = '.'
+        if sys.argv[0]:
+            self.module_dir = os.path.join(os.path.dirname(sys.argv[0]), '..')
+        self.module_dir = os.path.abspath(self.module_dir)
+        
+    def run_build(self, pr, subprocess):
+        cmd = [self.python, '-m', 'democraticd.build']            
+        p = subprocess.Popen(cmd + args, cwd=self.dev_module_dir, stdin=subprocess.PIPE)
+        p.stdin.write(json.dumps(vars(pr), sort_keys=True, indent=4))
+        p.stdin.close()
+        return p.wait()
         
     def log(self, data, debug_level=DebugLevel.ESSENTIAL):
         if self.debug_level >= debug_level:

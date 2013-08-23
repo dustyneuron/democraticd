@@ -100,13 +100,14 @@ class DemocraticDaemon:
         self.save_pull_requests()
         
         
-    def _proc_build(self, cmd, pr):
-        gevent.subprocess.call(cmd)
+    def _proc_build(self, pr):
+        self.config.run_build(pr, gevent.subprocess)
         print('build subprocess.call returned')
         pr.set_state('INSTALLING')
         if self.install_packages:
-            #gevent.subprocess.call(['demod-install', '])
+            # subprocess.call(['demod-install', '])
             # TODO: implement installing deb packages
+            pass
         
         self.build_greenlet.kill()
         raise Exception('this code should never be called')
@@ -122,17 +123,11 @@ class DemocraticDaemon:
             idx = pullrequest.find_pull_request_idx(self.repo_dict[repo], key)
             pr = self.repo_dict[repo][idx]
             
-            cmd = [
-                'demod-build',
-                str(pr.repo),
-                str(pr.issue_id)
-                ]
-                
             pr.set_state('BUILDING')
             self.save_pull_requests(pr.repo)
             
             if self.run_builds:
-                self.build_greenlet = gevent.Greenlet.spawn(self._proc_build, cmd, pr)
+                self.build_greenlet = gevent.Greenlet.spawn(self._proc_build, pr)
                 print('Spawned builder')
             else:
                 print('Would have spawned builder, but run_builds=False')
