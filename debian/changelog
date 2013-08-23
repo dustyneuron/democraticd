@@ -1,4 +1,4 @@
-python3-democraticd (0.1.dev3) UNRELEASED; urgency=low
+python3-democraticd (0.1.dev4) UNRELEASED; urgency=low
 
   * More build work
   * build adds a git tag for each change
@@ -14,8 +14,9 @@ python3-democraticd (0.1.dev3) UNRELEASED; urgency=low
   * more fixes
   * Discard old pull requests
   * Better debug commands, + fixes
+  * UNRELEASED
 
- -- Tom Scholl <tom@dustyneuron.com>  Thu, 22 Aug 2013 21:41:36 +0100
+ -- Tom Scholl <tom@dustyneuron.com>  Fri, 23 Aug 2013 16:43:16 +0100
 
 python3-democraticd (0.1.dev1) unstable; urgency=low
 
