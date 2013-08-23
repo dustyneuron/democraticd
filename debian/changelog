@@ -1,4 +1,4 @@
-python3-democraticd (0.1.dev4) UNRELEASED; urgency=low
+python3-democraticd (0.1.dev5) UNRELEASED; urgency=low
 
   * More build work
   * build adds a git tag for each change
@@ -15,8 +15,13 @@ python3-democraticd (0.1.dev4) UNRELEASED; urgency=low
   * Discard old pull requests
   * Better debug commands, + fixes
   * UNRELEASED
+  * Implemented demod-client
+  * Work on build & install systems
+  * Always use dev method of launching processes
+  * Pass pull request data as json pipe to build proc
+  * Factored out pull request database into a class
 
- -- Tom Scholl <tom@dustyneuron.com>  Fri, 23 Aug 2013 16:43:16 +0100
+ -- Tom Scholl <tom@dustyneuron.com>  Fri, 23 Aug 2013 16:56:51 +0100
 
 python3-democraticd (0.1.dev1) unstable; urgency=low
 
