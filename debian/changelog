@@ -1,4 +1,4 @@
-python3-democraticd (0.1.dev5) UNRELEASED; urgency=low
+python3-democraticd (0.1.dev5) unstable; urgency=low
 
   * More build work
   * build adds a git tag for each change
