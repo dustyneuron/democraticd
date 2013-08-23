@@ -36,11 +36,16 @@ class Config:
         self.module_dir = os.path.abspath(self.module_dir)
         
     def run_build(self, pr, subprocess):
-        cmd = [self.python, '-m', 'democraticd.build']            
-        p = subprocess.Popen(cmd + args, cwd=self.dev_module_dir, stdin=subprocess.PIPE)
-        p.stdin.write(json.dumps(vars(pr), sort_keys=True, indent=4))
+        cmd = [self.python, '-m', 'democraticd.build']
+        self.log('Popen ' + ' '.join(cmd))
+        p = subprocess.Popen(cmd, cwd=self.module_dir, stdin=subprocess.PIPE)
+        p.stdin.write(json.dumps(vars(pr), sort_keys=True, indent=4).encode())
         p.stdin.close()
         return p.wait()
+        
+    def run_install(self, pr, subprocess):
+        print('TODO: implement deb install')
+        return 0
         
     def log(self, data, debug_level=DebugLevel.ESSENTIAL):
         if self.debug_level >= debug_level:
