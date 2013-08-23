@@ -74,10 +74,12 @@ class DemocraticDaemon:
         print('build subprocess.call returned ' + str(r))
         if r == 0:
             pr.set_state('INSTALLING')
+            self.pr_db.write_pull_requests(pr.repo)
             if self.install_packages:
                 r = self.config.run_install(pr, gevent.subprocess)
                 if r == 0:
                     pr.set_state('DONE')
+                    self.pr_db.write_pull_requests(pr.repo)
         
         self.build_greenlet.kill()
         raise Exception('this code should never be called')
