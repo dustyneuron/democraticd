@@ -10,7 +10,7 @@ I call the core service that powers this a *democratic daemon*.
 
 - Delegative democracy so non-devs can use it, + you can say "Auto vote for changes that both Bob & Emily vote for".
 - Server forking + per-user data migration, for contentious issues and creating niche communities.
-- Users might pay subscriptions, and vote for funding devs & paying server costs.
+- Users might pay subscriptions, and vote for funding devs & paying server costs (enforced co-operative businesses)
 - Modular code so votes can carry forward between changes + you can say "Auto vote for changes to 'webforum' that Dave votes for"
 
 ### How it will work
