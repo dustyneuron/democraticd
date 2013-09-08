@@ -1,0 +1,43 @@
+[
+    {
+        "base_ref": "master", 
+        "base_sha": "0d76e64cc065e0671bdf533528bea2dec746d18c", 
+        "comment_api_url": "https://api.github.com/repos/democraticd/democraticd/issues/comments/23172853", 
+        "comment_body": "Thanks you for contributing!\nYour change proposal can be approved by running `demod approve democraticd 6`.\nNote that if you push any more changes to this branch, you'll lose any\napproval/votes your proposal had collected.", 
+        "comment_id": 23172853, 
+        "description": "", 
+        "error": "Pull request deleted whilst in state DONE", 
+        "issue_id": 6, 
+        "needs_update": false, 
+        "pull_api_url": "https://api.github.com/repos/democraticd/democraticd/pulls/6", 
+        "ref": "master", 
+        "repo": "democraticd", 
+        "repo_api_url": "https://api.github.com/repos/dustyneuron/democraticd", 
+        "repo_git_url": "https://github.com/dustyneuron/democraticd.git", 
+        "repo_type": "package", 
+        "sha": "36dc82dc6d171df2f5ef9ba31dd24d5664d234c6", 
+        "state": 7, 
+        "title": "Client program, build system improvements, & more", 
+        "username": "dustyneuron", 
+        "vote_url": "http://someurl.com/vote/democraticd/6/"
+    }, 
+    {
+        "base_ref": "master", 
+        "base_sha": "acebc94f4a5a29d44688d7cf14dd3e4dcf978b68", 
+        "description": "", 
+        "error": "Pull request deleted whilst in state DONE", 
+        "issue_id": 7, 
+        "needs_update": true, 
+        "pull_api_url": "https://api.github.com/repos/democraticd/democraticd/pulls/7", 
+        "ref": "master", 
+        "repo": "democraticd", 
+        "repo_api_url": "https://api.github.com/repos/dustyneuron/democraticd", 
+        "repo_git_url": "https://github.com/dustyneuron/democraticd.git", 
+        "repo_type": "package", 
+        "sha": "d45101eec63cad6d08328f204becb7d3d3db98f5", 
+        "state": 7, 
+        "title": "A couple of tweaks to make the pull request flow better", 
+        "username": "dustyneuron", 
+        "vote_url": "http://someurl.com/vote/democraticd/7/"
+    }
+]

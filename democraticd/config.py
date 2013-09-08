@@ -15,8 +15,8 @@ import sys
 # - They don't need write access
 
 class Config:
-    def __init__(self, debug_level=DebugLevel.ESSENTIAL, mark_read = True):
-        self.conf_dir = "/home/tom/.demod/"
+    def __init__(self, debug_level=DebugLevel.ESSENTIAL, mark_read = True, conf_dir = "/home/tom/.demod/"):
+        self.conf_dir = conf_dir
         self.packages_dir = os.path.join(self.conf_dir, "packages")
         self.debs_dir = os.path.join(self.conf_dir, "debs")
         self.pull_requests_dir = os.path.join(self.conf_dir, "pull-requests")
@@ -50,6 +50,19 @@ class Config:
     def log(self, data, debug_level=DebugLevel.ESSENTIAL):
         if self.debug_level >= debug_level:
             print(data)
+            
+    def add_package(self, package_name, module_names=[]):
+        filename = os.path.join(self.packages_dir, package_name + self.json_extension)
+        data = {'modules' : module_names}
+        with open(filename, 'wt') as f:
+            f.write(json.dumps(data, sort_keys=True, indent=4))
+        filename = self.get_pull_requests_filename(package_name)
+        with open(filename, 'wt') as f:
+            f.write(json.dumps([], sort_keys=True, indent=4))
+            
+    def del_package(self, package_name):
+        filename = os.path.join(self.packages_dir, package_name + self.json_extension)
+        os.remove(filename)
         
     def get_package_set(self):
         package_names = set([])
@@ -68,10 +81,7 @@ class Config:
 
     def get_package_module_set(self, package_name):
         return set(self.get_package_data(package_name)['modules'])
-        
-    def get_package_deb_set(self, package_name):
-        return set(self.get_package_data(package_name)['deb_packages'])
-        
+                
     def get_module_set(self):
         module_set = set([])
         package_names = self.get_package_set()
@@ -83,7 +93,8 @@ class Config:
         return self.get_package_set().union(self.get_module_set())
         
     def get_github_config(self):
-        with open(os.path.join(self.conf_dir, "github_api.json"), 'rt') as f:
+        filename = os.path.join(self.conf_dir, "github_api.json")
+        with open(filename, 'rt') as f:
             config = json.loads(f.read())
         return config
         
