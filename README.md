@@ -1,4 +1,4 @@
-### An enforced democratic server
+### A democratic internet service
 
 - Anyone can propose a change to the live server code
 - The users vote on which changes to accept
@@ -8,10 +8,18 @@ I call the core service that powers this a *democratic daemon*.
 
 ### Future features
 
-- Delegative democracy so non-devs can use it, + you can say "Auto vote for changes that both Bob & Emily vote for".
-- Server forking + per-user data migration, for contentious issues and creating niche communities.
-- Users might pay subscriptions, and vote for funding devs & paying server costs (enforced co-operative businesses)
-- Modular code so votes can carry forward between changes + you can say "Auto vote for changes to 'webforum' that Dave votes for"
+- Delegative democracy  
+  - You don't have to vote and you still get influence
+  - You can say "Auto vote for changes that both Bob & Emily vote for".
+- Server forking + per-user data migration  
+  - No lock in, anyone can start they're own
+  - Niche communities
+- Users/donors might pay Bitcoin subscriptions
+  - Funding developers
+  - System pays it's own hosting costs (autonomous co-operative businesses)
+- Modular code
+  - So votes can carry forward when unrelated changes get applied
+  - You can say "Auto vote for changes to 'webforum' that Dave votes for"
 
 ### How it will work
 
