@@ -98,6 +98,7 @@ class GitHubAPI:
                 return []
             
         result = self._api_call('/notifications')
+        last_modified = None
         if result.headers.get('last-modified'):
             last_modified = dateutil.parser.parse(result.headers.get('last-modified'))
             # GitHub API is broken and thinks GMT == UTC
@@ -109,7 +110,7 @@ class GitHubAPI:
         self.next_notify_time = time.time() + self.notify_poll_interval
         
         n_list = self._return_json(result)
-        if n_list and mark_read:
+        if n_list and mark_read and last_modified:
             last_read_at = iso_8601(last_modified)
             result = self._api_call('/notifications', 'PUT', fields={'last_read_at': last_read_at})
             if result.status != 205:

@@ -30,6 +30,11 @@ class TestPrDbi(unittest.TestCase):
         os.chdir('/')
         shutil.rmtree(self.working_dir)
         
+    def load_test_data(self, filename):
+        filename = os.path.join(self.test_data_dir, filename)
+        with open(filename, 'rt') as f:
+            return json.loads(f.read())
+        
     def mock_api_call(self, github_api, url, method='GET', fields=None, headers={}):
         result = Mock()
         if method == 'GET':
@@ -39,6 +44,7 @@ class TestPrDbi(unittest.TestCase):
         result.data = json.dumps(self.api_results.pop(0)).encode()
         result.headers.get.return_value = None
         return result
+        
         
     def test_config(self):
         self.assertEqual(self.config.get_repo_set(), set([]))
@@ -79,6 +85,9 @@ class TestPrDbi(unittest.TestCase):
         self.assertEqual(new_repo_dict, {})
         self.assertEqual(self.github_api._api_call.call_args_list, [call('/notifications')])
 
+        self.api_results.append(self.load_test_data('notifications.json'))
+        new_repo_dict = self.pr_db.get_new_pull_requests(self.github_api)
+        self.assertEqual(len(new_repo_dict['democraticd']), 1)
 
 if __name__ == '__main__':
     unittest.main()
