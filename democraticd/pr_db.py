@@ -4,7 +4,7 @@ import functools
 import json
 
 def find_pull_request_idx(pr_list, key):
-    matching_prs = [idx for idx in list(range(len(pr_list))) if pr_list[idx].key() == key]
+    matching_prs = [idx for idx in range(len(pr_list)) if pr_list[idx].key() == key]
     if len(matching_prs) == 0:
         return -1
     elif len(matching_prs) == 1:
@@ -13,18 +13,18 @@ def find_pull_request_idx(pr_list, key):
         raise Exception('pr_list has multiple prs for a single key')
 
 
-def update_pull_request_list(old_rp_list, new_rp_list):
-    new_list = list(old_rp_list)
-    for new_rp in new_rp_list:
-        idx = find_pull_request_idx(new_list, new_rp.key())
+def update_pull_request_list(old_pr_list, new_pr_list):
+    result_list = list(old_pr_list)
+    for new_pr in new_pr_list:
+        idx = find_pull_request_idx(result_list, new_pr.key())
         if idx == -1:
-            new_list.append(new_rp)
-        elif new_rp.is_more_recent_than(old_rp_list[idx]):
-            new_list[idx] = new_rp
+            result_list.append(new_pr)
+        elif new_pr.is_more_recent_than(result_list[idx]):
+            result_list[idx] = new_pr
         else:
-            new_list[idx].notify_update()
+            result_list[idx].notify_update()
             
-    return new_list
+    return result_list
 
 
 class PullRequestDB:
@@ -134,6 +134,8 @@ class PullRequestDB:
                     else:
                         pr.error = 'Pull request deleted whilst in state ' + pr.get_state()
                         pr.set_state('DONE')
+                    
+                    pr.needs_update = False
                         
                 self.write_pull_requests(repo)
 
