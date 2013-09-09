@@ -81,12 +81,12 @@ class TestPrDbi(unittest.TestCase):
         self.assertEqual(len(self.pr_db.pull_requests(repo)), 2)
 
         self.api_results.append([])
-        new_repo_dict = self.pr_db.get_new_pull_requests(self.github_api)
+        new_repo_dict, do_quit = self.pr_db.get_new_pull_requests(self.github_api)
         self.assertEqual(new_repo_dict, {})
         self.assertEqual(self.github_api._api_call.call_args_list, [call('/notifications')])
 
         self.api_results.append(self.load_test_data('notifications.json'))
-        new_repo_dict = self.pr_db.get_new_pull_requests(self.github_api)
+        new_repo_dict, do_quit = self.pr_db.get_new_pull_requests(self.github_api)
         self.assertEqual(len(new_repo_dict['democraticd']), 1)
 
 if __name__ == '__main__':

@@ -13,6 +13,7 @@ class PullRequest:
             
     def __init__(self, data=None):
         self.needs_update = False
+        self.reset_voting = False
         if data:
             self.repo = data['repository']['name']
             self.title = data['subject']['title']
@@ -57,6 +58,30 @@ class PullRequest:
         self.repo_git_url = data['head']['repo']['clone_url']
         self.repo_api_url = data['head']['repo']['url']
         self.set_state('FILLED')
+        
+    def update(self, found_pr_data, notify_voting_func):
+        self.needs_update = False
+        notify_voting = False
+        if found_pr_data:
+            if self.state < self.state_idx('FILLED'):
+                self.fill(found_pr_data)
+                
+            if found_pr_data['state'] != 'open':
+                self.set_state('DONE')
+                self.error = 'Pull request marked as ' + repr(found_pr_data['state'])
+                notify_voting = True
+                
+            if found_pr_data['head']['sha'] != self.sha:
+                # The requester has pushed more commits to the PR
+                self.sha = found_pr_data['head']['sha']
+                notify_voting = True
+        else:
+            self.error = 'Pull request deleted whilst in state ' + self.get_state()
+            self.set_state('DONE')
+            notify_voting = True
+            
+        if notify_voting:
+            notify_voting_func(self)
         
     def set_vote_url(self):
         self.vote_url = 'http://someurl.com/vote/' + self.repo + '/' + str(self.issue_id) + '/'

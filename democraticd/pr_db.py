@@ -107,6 +107,9 @@ class PullRequestDB:
         if do_quit:
             return (None, do_quit)
         return (self.create_pull_requests(notifications), do_quit)
+        
+    def notify_voting_func(self, pr):
+        print('notify_voting_func ' + str(pr.key()))
 
     def fill_pull_requests(self, github_api):            
         for repo in self.repos():
@@ -119,23 +122,13 @@ class PullRequestDB:
             if need_fill:
                 list_pull_requests = github_api.list_pull_requests(repo)
                 for pr in self.pull_requests(repo):
-                    found_new_pr = None
-                    for full_pr in list_pull_requests:
-                        if pr.pull_api_url == full_pr['url']:
-                            found_new_pr = full_pr
+                    found_pr_data = None
+                    for pr_data in list_pull_requests:
+                        if pr.pull_api_url == pr_data['url']:
+                            found_pr_data = pr_data
                             break
 
-                    if found_new_pr:
-                        if pr.state < pr.state_idx('FILLED'):
-                            pr.fill(found_new_pr)
-                        if found_new_pr['state'] != 'open':
-                            pr.set_state('DONE')
-                            pr.error = 'Pull request marked as ' + repr(found_new_pr['state'])
-                    else:
-                        pr.error = 'Pull request deleted whilst in state ' + pr.get_state()
-                        pr.set_state('DONE')
-                    
-                    pr.needs_update = False
+                    pr.update(found_pr_data, self.notify_voting_func)
                         
                 self.write_pull_requests(repo)
 
