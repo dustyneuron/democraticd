@@ -103,12 +103,10 @@ class PullRequestDB:
 
         
     def get_new_pull_requests(self, github_api):
-        
-        notifications = github_api.get_new_notifications(mark_read=self.config.mark_read)
-        if not notifications:
-            return {}
-        return self.create_pull_requests(notifications)
-
+        notifications, do_quit = github_api.get_new_notifications(mark_read=self.config.mark_read)
+        if do_quit:
+            return (None, do_quit)
+        return (self.create_pull_requests(notifications), do_quit)
 
     def fill_pull_requests(self, github_api):            
         for repo in self.repos():
@@ -157,13 +155,15 @@ class PullRequestDB:
             self.read_pull_requests(repo)
 
         print('Getting new pull request notifications from GitHub API')
-        new_repo_dict = self.get_new_pull_requests(github_api)
+        new_repo_dict, do_quit = self.get_new_pull_requests(github_api)
+        if do_quit:
+            return
         if new_repo_dict:
             for repo in self.repos():
                 if repo in new_repo_dict:
                     self.repo_dict[repo] = update_pull_request_list(self.repo_dict[repo], new_repo_dict[repo])
                     self.write_pull_requests(repo)
-                    
+                
         print('Filling any pull requests if needed')
         self.fill_pull_requests(github_api)
                         

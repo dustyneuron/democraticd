@@ -95,7 +95,7 @@ class GitHubAPI:
             sleep_time = int(self.next_notify_time - current_time)
             self.log('Sleeping for ' + str(sleep_time) + ' secs because of X-poll-interval')
             if self.quit_event.wait(sleep_time):
-                return []
+                return ([], True)
             
         result = self._api_call('/notifications')
         last_modified = None
@@ -117,7 +117,7 @@ class GitHubAPI:
                 raise GitHubError(str(result.status) + result.reason)
             result.release_conn()
                 
-        return n_list
+        return (n_list, False)
         
     def list_pull_requests(self, repo):
         result = self._api_call('/repos/' + self.username + '/' + repo + '/pulls')
