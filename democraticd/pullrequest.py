@@ -22,6 +22,17 @@ class PullRequest:
             self.set_state('NEW')
         else:
             self.set_state('EMPTY')
+            
+    def read_from_file(self, f):
+        data = ''
+        for line in f:
+            data += line
+        dic = json.loads(data)           
+        for (k, v) in dic.items():
+            self.__dict__[k] = v
+
+    def write_to_file(self, f):
+        f.write(json.dumps(vars(self), sort_keys=True, indent=4).encode())
     
     def key(self):
         return self.pull_api_url

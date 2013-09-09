@@ -37,13 +37,9 @@ class Builder:
             
     def build(self, ):
         print('build started')
-        data = ''
-        for line in sys.stdin:
-            data += line
-        dic = json.loads(data)
-        pr = PullRequest()            
-        for (k, v) in dic.items():
-            pr.__dict__[k] = v
+        pr = PullRequest()
+        pr.read_from_file(sys.stdin)
+        for (k, v) in pr.__dict__.items():
             print('build pr > ' + str(k) + ' = ' + str(v))
         
         config = democraticd.config.Config()            

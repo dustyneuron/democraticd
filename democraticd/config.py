@@ -39,7 +39,7 @@ class Config:
         cmd = [self.python, '-m', 'democraticd.build']
         self.log('Popen ' + ' '.join(cmd))
         p = subprocess.Popen(cmd, cwd=self.module_dir, stdin=subprocess.PIPE)
-        p.stdin.write(json.dumps(vars(pr), sort_keys=True, indent=4).encode())
+        pr.write_to_file(p.stdin)
         p.stdin.close()
         return p.wait()
         
