@@ -1,5 +1,6 @@
 from democraticd import github_api
 from democraticd.utils import DebugLevel
+from democraticd.pullrequest import prs_to_json
 
 import os
 import json
@@ -39,7 +40,7 @@ class Config:
         cmd = [self.python, '-m', 'democraticd.build']
         self.log('Popen ' + ' '.join(cmd))
         p = subprocess.Popen(cmd, cwd=self.module_dir, stdin=subprocess.PIPE)
-        pr.write_to_file(p.stdin)
+        p.stdin.write(prs_to_json([pr]).encode())
         p.stdin.close()
         return p.wait()
         

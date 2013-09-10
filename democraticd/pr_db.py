@@ -1,7 +1,5 @@
-from democraticd.pullrequest import PullRequest
+from democraticd.pullrequest import PullRequest, prs_to_json, prs_from_json
 
-import functools
-import json
 
 def find_pull_request_idx(pr_list, key):
     matching_prs = [idx for idx in range(len(pr_list)) if pr_list[idx].key() == key]
@@ -40,16 +38,10 @@ class PullRequestDB:
 
         for repo in repo_list:
             filename = self.config.get_pull_requests_filename(repo)
-            pr_list = []
             with open(filename, 'rt') as f:
-                data = json.loads(f.read())
-            for d in data:
-                pr = PullRequest()
-                for (k, v) in d.items():
-                    pr.__dict__[k] = v
-                pr_list.append(pr)
-                
-            self.repo_dict[repo] =  pr_list
+                pr_list = prs_from_json(f.read())
+            
+            self.repo_dict[repo] = pr_list
         
     def write_pull_requests(self, repo_list=None):
         if not repo_list:
@@ -58,19 +50,22 @@ class PullRequestDB:
             repo_list = [repo_list]
         
         for repo in repo_list:
-            filename = self.config.get_pull_requests_filename(repo)
-            data = []
-            for pr in self.repo_dict[repo]:
-                data.append(vars(pr))
-                
-            with open(filename, 'wt') as f:
-                f.write(json.dumps(data, sort_keys=True, indent=4))
+            data = prs_to_json(self.pull_requests(repo)).encode()
             
-    def pull_requests(self, repo=None):
-        if repo:
-            return self.repo_dict[repo][:]
-        else:
-            return functools.reduce(lambda acc, x: acc + x, self.repo_dict.values())
+            filename = self.config.get_pull_requests_filename(repo)
+            with open(filename, 'wb') as f:
+                f.write(data)
+            
+    def pull_requests(self, repo_list=None):
+        if not repo_list:
+            repo_list = self.repos()
+        elif type(repo_list) != type([]):
+            repo_list = [repo_list]
+
+        r = []
+        for repo in repo_list:
+            r = r + self.repo_dict[repo]
+        return r
         
     def repos(self):
         return self.repo_dict.keys()

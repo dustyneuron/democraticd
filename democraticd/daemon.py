@@ -2,6 +2,7 @@ import democraticd.config
 import democraticd.build
 import democraticd.pr_db
 from democraticd.utils import DebugLevel
+from democraticd.pullrequest import prs_to_json
 
 import gevent
 import gevent.server
@@ -108,7 +109,7 @@ class DemocraticDaemon:
     def command_server(self, socket, address):
         print ('New connection from %s:%s' % address)
         socket.sendall('Welcome to the Democratic Daemon server!\n')
-        help_message = 'Commands are "stop", "list" and "approve"\n'
+        help_message = 'Commands are "stop", "list", "json" and "approve"\n'
         socket.sendall(help_message)
         fileobj = socket.makefile()
         while True:
@@ -142,6 +143,10 @@ class DemocraticDaemon:
                             empty = False
                     if empty:
                         fileobj.write('No pull requests\n'.encode())
+                        
+                elif command == 'json':
+                    data = prs_to_json(self.pr_db.pull_requests()).encode()
+                    fileobj.write(data)
 
                 elif command.startswith('approve'):
                     r = re.match('approve\s+(?P<repo>\S+)\s+(?P<issue_id>\d+)\s*$', command)

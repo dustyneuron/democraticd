@@ -1,4 +1,14 @@
+import json
+
+def prs_to_json(pr_list):
+    dict_list = [pr.to_dict() for pr in pr_list]
+    return json.dumps(dict_list, sort_keys=True, indent=4)
     
+def prs_from_json(data):
+    dict_list = json.loads(data)
+    return [PullRequest.create_from_dict(dic) for dic in dict_list]
+    
+
 class PullRequest:
     states = {
         0: 'EMPTY',
@@ -23,16 +33,15 @@ class PullRequest:
         else:
             self.set_state('EMPTY')
             
-    def read_from_file(self, f):
-        data = ''
-        for line in f:
-            data += line
-        dic = json.loads(data)           
+    @classmethod
+    def create_from_dict(cls, dic):
+        pr = cls()
         for (k, v) in dic.items():
-            self.__dict__[k] = v
-
-    def write_to_file(self, f):
-        f.write(json.dumps(vars(self), sort_keys=True, indent=4).encode())
+            pr.__dict__[k] = v
+        return pr
+    
+    def to_dict(self):
+        return vars(self)
     
     def key(self):
         return self.pull_api_url
