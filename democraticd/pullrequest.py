@@ -2,7 +2,7 @@ import json
 
 def prs_to_json(pr_list):
     dict_list = [pr.to_dict() for pr in pr_list]
-    return json.dumps(dict_list, sort_keys=True, indent=4)
+    return json.dumps(dict_list, sort_keys=True, indent=4) + '\n'
     
 def prs_from_json(data):
     dict_list = json.loads(data)
