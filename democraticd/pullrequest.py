@@ -77,6 +77,7 @@ class PullRequest:
         self.base_sha = data['base']['sha']
         self.repo_git_url = data['head']['repo']['clone_url']
         self.repo_api_url = data['head']['repo']['url']
+        self.html_url = data['_links']['html']['href']
         self.set_state('FILLED')
         
     def update(self, found_pr_data, notify_voting_func):
