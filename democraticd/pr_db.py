@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 from democraticd.pullrequest import PullRequest, prs_to_json, prs_from_json
 
 

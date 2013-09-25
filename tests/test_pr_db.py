@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 import unittest
 from mock import Mock, MagicMock, call
 import tempfile

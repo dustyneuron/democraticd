@@ -1,8 +1,11 @@
+from __future__ import print_function, unicode_literals
+
 from democraticd import github_api
 from democraticd.utils import DebugLevel
 from democraticd.pullrequest import prs_to_json
 
 import os
+import os.path
 import json
 import sysconfig
 import sys
@@ -25,10 +28,13 @@ class Config:
         self.port = 9999
         self.debug_level = debug_level
         self.mark_read = mark_read
-        
-        os.makedirs(self.packages_dir, exist_ok=True)
-        os.makedirs(self.debs_dir, exist_ok=True)
-        os.makedirs(self.pull_requests_dir, exist_ok=True)
+
+        if not os.path.exists(self.packages_dir):
+            os.makedirs(self.packages_dir)
+        if not os.path.exists(self.debs_dir):
+            os.makedirs(self.debs_dir)
+        if not os.path.exists(self.pull_requests_dir):
+            os.makedirs(self.pull_requests_dir)
         
         self.python = 'python' + sysconfig.get_python_version()[0]
         self.module_dir = '.'
@@ -108,7 +114,8 @@ class Config:
 
     def get_deb_directory(self, repo):
         d = os.path.join(self.debs_dir, repo + '/')
-        os.makedirs(d, exist_ok=True)
+        if not os.path.exists(d):
+            os.makedirs(d)
         return d
         
 

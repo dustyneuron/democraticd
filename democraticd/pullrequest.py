@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 import json
 
 def prs_to_json(pr_list):
