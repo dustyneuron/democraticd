@@ -134,12 +134,14 @@ class GitHubAPI:
                     
             approve_cmd = '`demod approve ' + pull_request.repo + ' ' + str(pull_request.issue_id) + "`"
             comment = """\
-Thanks you for contributing!
-Your change proposal can be approved by running """ + approve_cmd + """.
+Thanks for contributing!
 
-Note that if you push any more changes to this branch:
- * You must make a comment here so the daemon notices your changes
- * You'll then lose any votes your proposal had collected"""
+##### Get people to vote for your change
+Your change proposal can be approved by running """ + approve_cmd + """.  
+
+##### If you push any more changes to this branch:
+* You must make a comment (bump this thread) so the daemon notices your changes
+* You'll then lose any votes your proposal had collected"""
 
             result = self._api_call(url, 'POST', fields={'body': comment})
             if result.status != 201:
