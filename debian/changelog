@@ -1,3 +1,10 @@
+python-democraticd (0.2.dev1) unstable; urgency=low
+
+  * Moving to python2
+  * Lots of changes
+
+ -- Tom Scholl <tom@dustyneuron.com>  Wed, 25 Sep 2013 01:38:07 +0100
+
 python3-democraticd (0.1.dev5) unstable; urgency=low
 
   * More build work

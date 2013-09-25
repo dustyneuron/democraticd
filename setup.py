@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='democraticd',
-        version='0.1.dev1',
+        version='0.2.dev',
         description='A Democratic Daemon',
         long_description="""\
 A democratic daemon is the core system service that runs an
