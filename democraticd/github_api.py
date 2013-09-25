@@ -136,8 +136,10 @@ class GitHubAPI:
             comment = """\
 Thanks you for contributing!
 Your change proposal can be approved by running """ + approve_cmd + """.
-Note that if you push any more changes to this branch, you'll lose any
-approval/votes your proposal had collected."""
+
+Note that if you push any more changes to this branch:
+ * You must make a comment here so the daemon notices your changes
+ * You'll then lose any votes your proposal had collected"""
 
             result = self._api_call(url, 'POST', fields={'body': comment})
             if result.status != 201:

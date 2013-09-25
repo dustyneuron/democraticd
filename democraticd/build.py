@@ -59,12 +59,15 @@ class Builder:
             self.run(['git', 'clone', 'https://github.com/' + github_config['username'] + '/' + pr.repo + '.git', pr.repo])
             os.chdir(os.path.join(self.working_dir, pr.repo))
             last_commit = self.get(['git', 'log', '-n', '1', '--pretty=format:%H']).strip()
+            #last_version = self.get(['git', 'tag', '--contains', pr.sha]).strip()[len('debian/'):]
             
             self.run(['git', 'fetch', pr.repo_git_url, pr.ref + ':refs/remotes/' + pr.username + '/' + pr.ref])
+            self.run(['git', 'checkout', pr.sha])
+            last_version = self.get(['git', 'describe', '--tags', '--abbrev=0', '--match', "'debian/*'"])
+            
+            self.run(['git', 'checkout', 'master'])            
             self.run(['git', 'merge', pr.sha])
             
-            #last_version = self.get(['git', 'tag', '--contains', last_commit]).strip()[len('debian/'):]
-            last_version = self.get(['git', 'tag', '--contains', pr.sha]).strip()[len('debian/'):]
             new_version = increment_version(last_version)
             
             self.run(['git-dch', '--since', last_commit, '--meta', '--commit', '-N', new_version])
