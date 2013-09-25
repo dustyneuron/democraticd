@@ -64,6 +64,7 @@ class Builder:
             self.run(['git', 'fetch', pr.repo_git_url, pr.ref + ':refs/remotes/' + pr.username + '/' + pr.ref])
             self.run(['git', 'checkout', pr.sha])
             last_version = self.get(['git', 'describe', '--tags', '--abbrev=0', '--match', 'debian/*'])
+            last_version = last_version.strip()[len('debian/'):]
             
             self.run(['git', 'checkout', 'master'])            
             self.run(['git', 'merge', pr.sha])

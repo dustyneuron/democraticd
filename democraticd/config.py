@@ -48,7 +48,8 @@ class Config:
         p = subprocess.Popen(cmd, cwd=self.module_dir, stdin=subprocess.PIPE)
         p.stdin.write(prs_to_json([pr]).encode())
         p.stdin.close()
-        return p.wait()
+        p.wait()
+        return p.returncode
         
     def run_install(self, pr, subprocess):
         print('TODO: implement deb install')
