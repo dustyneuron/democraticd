@@ -1,3 +1,33 @@
+python-democraticd (0.2.dev2) UNRELEASED; urgency=low
+
+  * save PRs after updating state
+  * distro UNRELEASED -> unstable so changelog updates
+  * Mark closed PRs as done
+  * Properly mark PRs as done when they are closed
+  * bug fix for github api exception
+  * Unit tests
+  * Tests
+  * Note about co-operatives
+  * Update README.md
+  * Testing for pull requests db & github api
+  * Test case dummy notification
+  * Test data
+  * Bug fix - do not delete PRs when asked to quit
+  * bug fix for not clearing pr.needs_update
+  * Starting to feed a voting system
+  * Put PR to/from JSON code in PR class
+  * PR <-> json is always list based
+  * Add newline to JSON pr lists
+  * Save html_url on pull requests from GitHub
+  * Starting move back to python2
+  * Lots of python3->2 changes
+  * Preping for release 0.2, new package name
+  * Fixed build to look for new git tags
+  * Another git tags build fix, improved comment msg
+  * Another tiny build fix
+
+ -- Tom Scholl <tom@dustyneuron.com>  Wed, 25 Sep 2013 02:47:16 +0100
+
 python-democraticd (0.2.dev1) unstable; urgency=low
 
   * Moving to python2
