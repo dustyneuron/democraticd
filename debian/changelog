@@ -1,3 +1,9 @@
+python-democraticd (0.2.dev7) democraticd; urgency=low
+
+  * Debug statements for install
+
+ -- Tom Scholl <tom@dustyneuron.com>  Fri, 27 Sep 2013 22:30:38 +0100
+
 python-democraticd (0.2.dev6) democraticd; urgency=low
 
   * Fixed install script bugs
