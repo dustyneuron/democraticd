@@ -13,23 +13,26 @@ import gevent.subprocess
 import gevent.socket
 import gevent.queue
 
+from daemon import DaemonContext
+
 import functools
 import sys
 import os.path
 import re
     
 class DemocraticDaemon:
-    def __init__(self, debug_level=DebugLevel.ESSENTIAL, mark_read=True,
+        
+    def __init__(self, config=None,
             make_comments=True, run_builds=True, install_packages=True):
-                
-        self.debug_level = debug_level
+    
         self.run_builds = run_builds
         self.install_packages = install_packages
+
+        if not config:
+            config = democraticd.config.Config()
+        self.config = config
         
         self.quit_event = gevent.event.Event()
-        
-        self.config = democraticd.config.Config(debug_level=self.debug_level, mark_read = mark_read)
-        
         self.github_api = self.config.create_github_api(self.quit_event, make_comments)
 
         self.server = gevent.server.StreamServer(
@@ -201,15 +204,28 @@ class DemocraticDaemon:
                 return
 
 
-def start():
-    DemocraticDaemon().start()
+def start(**keywords):
+    context = DaemonContext()
+
+    with context:
+        DemocraticDaemon(**keywords).start()
     
 def debug(**keywords):
-    args = {}
+    args = {}    
     args.update(debug_level=DebugLevel.DEBUG, mark_read=False, make_comments=False,
         run_builds=False, install_packages=False)
     args.update(keywords)
-    DemocraticDaemon(**args).start()
+
+    config = democraticd.config.Config(
+        debug_level = args['debug_level'],
+        mark_read = args['mark_read'],
+        )
+    del args['debug_level']
+    del args['mark_read']
+
+    args.update(config=config)
+    
+    start(**args)
 
 if __name__ == "__main__":
     start()
