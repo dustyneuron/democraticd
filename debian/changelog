@@ -1,4 +1,4 @@
-python-democraticd (0.2.dev3) UNRELEASED; urgency=low
+python-democraticd (0.2.dev3) unstable; urgency=low
 
   * save PRs after updating state
   * distro UNRELEASED -> unstable so changelog updates
