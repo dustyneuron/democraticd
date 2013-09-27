@@ -1,3 +1,10 @@
+python-democraticd (0.2.dev4) UNRELEASED; urgency=low
+
+  * Fix build func typo to not crash
+  * changelog uses 'unstable' rather than 'UNRELEASED'
+
+ -- Tom Scholl <tom@dustyneuron.com>  Fri, 27 Sep 2013 20:01:50 +0100
+
 python-democraticd (0.2.dev3) unstable; urgency=low
 
   * save PRs after updating state
