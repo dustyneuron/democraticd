@@ -74,7 +74,7 @@ class Builder:
             
             new_version = increment_version(last_version)
             
-            self.run(['git-dch', '--since', last_commit, '--meta', '--commit', '-N', new_version, '-R'])
+            self.run(['git-dch', '--since', last_commit, '--meta', '--commit', '-N', new_version, '--force-distribution', '--distribution=democraticd'])
             self.run(['git', 'tag', 'debian/' + new_version])
             
             self.run(['git', 'push', 'origin', '--tags'])
