@@ -1,4 +1,4 @@
-python-democraticd (0.2.dev2) UNRELEASED; urgency=low
+python-democraticd (0.2.dev3) UNRELEASED; urgency=low
 
   * save PRs after updating state
   * distro UNRELEASED -> unstable so changelog updates
@@ -25,8 +25,10 @@ python-democraticd (0.2.dev2) UNRELEASED; urgency=low
   * Fixed build to look for new git tags
   * Another git tags build fix, improved comment msg
   * Another tiny build fix
+  * Few tweaks to build process
+  * Outline for deb install proc
 
- -- Tom Scholl <tom@dustyneuron.com>  Wed, 25 Sep 2013 02:47:16 +0100
+ -- Tom Scholl <tom@dustyneuron.com>  Fri, 27 Sep 2013 19:54:24 +0100
 
 python-democraticd (0.2.dev1) unstable; urgency=low
 
