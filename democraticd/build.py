@@ -103,7 +103,7 @@ class Builder:
         os.chdir('/')
         shutil.rmtree(self.working_dir)
         
-        sys.stdout(json.dumps(output_data, sort_keys=True, indent=4) + '\n')
+        sys.stdout.write(json.dumps(output_data, sort_keys=True, indent=4) + '\n')
         
 def start():
     Builder().build()
