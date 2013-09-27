@@ -45,11 +45,12 @@ class Config:
     def run_script(self, module_name, input_string, subprocess):
         cmd = [self.python, '-m', 'democraticd.' + module_name]
         self.log('Popen ' + ' '.join(cmd))
-        p = subprocess.Popen(cmd, cwd=self.module_dir, stdin=subprocess.PIPE)
-        p.stdin.write(input_string.encode())
-        p.stdin.close()
-        p.wait()
-        return p.returncode
+        p = subprocess.Popen(cmd, cwd=self.module_dir, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stderr)
+        data, _ = p.communicate(input_string.encode())
+        #p.stdin.write(input_string.encode())
+        #p.stdin.close()
+        #p.wait()
+        return p.returncode, data
                 
     def log(self, data, debug_level=DebugLevel.ESSENTIAL):
         if self.debug_level >= debug_level:
