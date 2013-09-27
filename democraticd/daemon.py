@@ -73,13 +73,13 @@ class DemocraticDaemon:
         
         
     def build_thread(self, pr):
-        r = self.config.run_build(pr, gevent.subprocess)
+        r, output = self.config.run_script('build', prs_to_json([pr]), gevent.subprocess)
         print('build subprocess.call returned ' + str(r))
         if r == 0:
             pr.set_state('INSTALLING')
             self.pr_db.write_pull_requests(pr.repo)
             if self.install_packages:
-                r = self.config.run_install(pr, gevent.subprocess)
+                r = self.config.run_script('install', output, gevent.subprocess)
                 if r == 0:
                     pr.set_state('DONE')
                     self.pr_db.write_pull_requests(pr.repo)

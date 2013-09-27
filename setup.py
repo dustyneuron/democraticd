@@ -20,9 +20,10 @@ Debian packages.
             },
         entry_points = {
             'console_scripts': [
-                'democraticd = democraticd.daemon:start',
+                'demod-daemon = democraticd.daemon:start',
                 'demod = democraticd.client:start',
                 'demod-build = democraticd.build:start',
+                'demod-install = democraticd.install:start',
                 ],
             },
         classifiers=[

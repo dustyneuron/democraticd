@@ -23,35 +23,38 @@ def increment_version(v):
 class Builder:
     def __init__(self):
         pass
+        
+    def log(self, s):
+        sys.stderr.write(s + '\n')
 
     def run(self, args):
         cmd = functools.reduce(lambda acc, x: acc + ' ' + x, args)
-        print('run: ' + cmd)
-        r = subprocess.call(args, stderr=sys.stderr, stdout=sys.stdout)
+        self.log('run: ' + cmd)
+        r = subprocess.call(args, stderr=sys.stderr, stdout=sys.stderr)
         if r != 0:
             raise Exception('"' + cmd + '" returned ' + str(r))
             
     def get(self, args):
         cmd = functools.reduce(lambda acc, x: acc + ' ' + x, args)
-        print('get: ' + cmd)
+        self.log('get: ' + cmd)
         r = subprocess.check_output(args, stderr=sys.stderr)
         return r.decode()
             
     def build(self, ):
-        print('build started')
+        self.log('build started')
 
         data = ''
         for line in sys.stdin:
             data += line
         pr = prs_from_json(data)[0]
         for (k, v) in pr.__dict__.items():
-            print('build pr > ' + str(k) + ' = ' + str(v))
+            self.log('build pr > ' + str(k) + ' = ' + str(v))
         
         config = democraticd.config.Config()            
         github_config = config.get_github_config()
             
         self.working_dir = tempfile.mkdtemp()
-        print('Working directory is ' + self.working_dir)
+        self.log('Working directory is ' + self.working_dir)
         os.chdir(self.working_dir)
         
         try:
@@ -85,17 +88,22 @@ class Builder:
           
         os.chdir(self.working_dir)
         shutil.rmtree(pr.repo)
-        print('Built package(s) OK in ' + self.working_dir)
+        self.log('Built package(s) OK in ' + self.working_dir)
         files = os.listdir(self.working_dir)
+        output_data = {}
+        output_data[pr.repo] = []
         for f in files:
             if re.match('.*\.deb$', f):
                 src = os.path.join(self.working_dir, f)
                 dest = os.path.join(config.get_deb_directory(pr.repo), f)
-                print('Copying ' + src + ' to ' + dest)
+                self.log('Copying ' + src + ' to ' + dest)
                 shutil.copy(src, dest)
+                output_data[pr.repo].append(f)
                 
         os.chdir('/')
         shutil.rmtree(self.working_dir)
+        
+        sys.stdout(json.dumps(output_data, sort_keys=True, indent=4) + '\n')
         
 def start():
     Builder().build()
