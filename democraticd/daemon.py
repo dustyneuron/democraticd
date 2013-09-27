@@ -79,7 +79,8 @@ class DemocraticDaemon:
             pr.set_state('INSTALLING')
             self.pr_db.write_pull_requests(pr.repo)
             if self.install_packages:
-                r = self.config.run_script('install', output, gevent.subprocess)
+                r, output = self.config.run_script('install', output, gevent.subprocess)
+                print('install subprocess.call returned ' + str(r))
                 if r == 0:
                     pr.set_state('DONE')
                     self.pr_db.write_pull_requests(pr.repo)

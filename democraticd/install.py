@@ -5,6 +5,7 @@ import sys
 
 class Installer:
     def __init__(self):
+        self.log('Installer() starting...')
         data = ''
         for line in sys.stdin:
             data += line
@@ -12,9 +13,11 @@ class Installer:
         for repo, debs in debs_dict.items():
             for d in debs:
                 self.log('deb to install: ' + repo + '/' + d)
+                
+        self.log('Installer() finished')
 
     def log(self, s):
-        sys.stdout.write(s + '\n')
+        sys.stderr.write(s + '\n')
 
     
 
