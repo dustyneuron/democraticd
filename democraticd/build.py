@@ -20,7 +20,7 @@ def increment_version(v):
     return r.group('first') + str(int(r.group('last')) + 1)
 
 
-class Builder:
+class Builder(object):
     def __init__(self):
         pass
         

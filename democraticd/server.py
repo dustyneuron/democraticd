@@ -20,17 +20,16 @@ import sys
 import os.path
 import re
     
-class DemocraticDaemon:
-        
-    def __init__(self, config=None,
+class DemocraticDaemon(object):
+            
+    def __init__(self, config,
             make_comments=True, run_builds=True, install_packages=True):
     
         self.run_builds = run_builds
         self.install_packages = install_packages
 
-        if not config:
-            config = democraticd.config.Config()
         self.config = config
+        self.config.create_missing_config()
         
         self.quit_event = gevent.event.Event()
         self.github_api = self.config.create_github_api(self.quit_event, make_comments)
@@ -49,7 +48,7 @@ class DemocraticDaemon:
         self.config.log(*args)
         
     def start(self):
-        print('Starting server on port ' + str(self.config.port))
+        self.log('Starting server on port ' + str(self.config.port))
         self.server.start()
         
         gevent.Greenlet.spawn(self.start_builds)
@@ -65,25 +64,25 @@ class DemocraticDaemon:
         while not self.quit_event.is_set():
             self.pr_db.do_github_actions(self.github_api)
             
-        print('Shutdown: waiting for all pending builds to have started')
+        self.log('Shutdown: waiting for all pending builds to have started')
         self.build_queue.join()
             
-        print('Shutdown: waiting for current build to stop')
+        self.log('Shutdown: waiting for current build to stop')
         if self.build_greenlet and (not self.build_greenlet.ready()):
             self.build_greenlet.join()
         
-        print('Shutdown complete')
+        self.log('Shutdown complete')
         
         
     def build_thread(self, pr):
         r, output = self.config.run_script('build', prs_to_json([pr]), gevent.subprocess)
-        print('build subprocess.call returned ' + str(r))
+        self.log('build subprocess.call returned ' + str(r))
         if r == 0:
             pr.set_state('INSTALLING')
             self.pr_db.write_pull_requests(pr.repo)
             if self.install_packages:
                 r, output = self.config.run_script('install', output, gevent.subprocess)
-                print('install subprocess.call returned ' + str(r))
+                self.log('install subprocess.call returned ' + str(r))
                 if r == 0:
                     pr.set_state('DONE')
                     self.pr_db.write_pull_requests(pr.repo)
@@ -96,7 +95,7 @@ class DemocraticDaemon:
             (repo, key) = self.build_queue.get()
             
             if self.build_greenlet and (not self.build_greenlet.ready()):
-                print('Trying to spawn new builder, waiting for current one to finish')
+                self.log('Trying to spawn new builder, waiting for current one to finish')
                 self.build_greenlet.join()
             
             pr = self.pr_db.find_pull_request(repo, key)
@@ -106,14 +105,14 @@ class DemocraticDaemon:
             
             if self.run_builds:
                 self.build_greenlet = gevent.Greenlet.spawn(self.build_thread, pr)
-                print('Spawned builder')
+                self.log('Spawned builder')
             else:
-                print('Would have spawned builder, but run_builds=False')
+                self.log('Would have spawned builder, but run_builds=False')
             
             self.build_queue.task_done()
             
     def command_server(self, socket, address):
-        print ('New connection from %s:%s' % address)
+        self.log('New connection from %s:%s' % address)
         socket.sendall('Welcome to the Democratic Daemon server!\n')
         help_message = 'Commands are "stop", "list", "json" and "approve"\n'
         socket.sendall(help_message)
@@ -122,7 +121,7 @@ class DemocraticDaemon:
             try:
                 line = fileobj.readline()                    
                 if not line:
-                    print ("client disconnected")
+                    self.log("client disconnected")
                     return
                     
                 command = line.decode().strip().lower()
@@ -130,10 +129,10 @@ class DemocraticDaemon:
                 if command.startswith('$'):
                     command = command[1:]
                     single_cmd = True
-                    print('Received single command ' + repr(command))
+                    self.log('Received single command ' + repr(command))
                     
                 if command == 'stop':
-                    print ("client told server to stop")
+                    self.log("client told server to stop")
                     fileobj.write(('STOPPING SERVER\n').encode())
                     fileobj.flush()
                     self.quit_event.set()
@@ -196,36 +195,58 @@ class DemocraticDaemon:
                     return
                     
             except Exception as e:
-                print(e)
+                self.log(e)
                 try:
                     socket.shutdown(gevent.socket.SHUT_RDWR)
                 except Exception as e2:
-                    print(e2)
+                    self.log(e2)
                 return
 
 
 def start(**keywords):
-    context = DaemonContext()
-
-    with context:
-        DemocraticDaemon(**keywords).start()
-    
-def debug(**keywords):
-    args = {}    
-    args.update(debug_level=DebugLevel.DEBUG, mark_read=False, make_comments=False,
-        run_builds=False, install_packages=False)
+    args = {}
+    args.update(
+        dev_install = False,
+        mark_read = None,
+        debug_level = None,
+        )
     args.update(keywords)
 
     config = democraticd.config.Config(
+        dev_install = args['dev_install'],
         debug_level = args['debug_level'],
         mark_read = args['mark_read'],
         )
+    del args['dev_install']
     del args['debug_level']
     del args['mark_read']
-
-    args.update(config=config)
     
+    log_file = open(config.log_filename, 'wt+')
+    
+    context = DaemonContext()
+    context.uid = config.uid
+    context.gid = config.gid
+    context.stdout = log_file
+    context.stderr = log_file
+
+    with context:
+        DemocraticDaemon(config, **args).start()
+    
+def debug(**keywords):
+    args = {}    
+    args.update(
+        dev_install = True,
+        debug_level = DebugLevel.DEBUG,
+        mark_read = False,
+        make_comments = False,
+        run_builds = False,
+        install_packages = False,
+        )
+    args.update(keywords)
     start(**args)
 
 if __name__ == "__main__":
-    start()
+    dev_install = False
+    if '--dev' in sys.argv:
+        dev_install = True
+    start(dev_install=dev_install)

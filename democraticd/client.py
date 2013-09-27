@@ -10,12 +10,19 @@ from democraticd.config import Config
 import sys
 import re
 
-def start():
-    config = Config()
-    
+def start():    
+    dev_install = False
     single_cmd = None
     if len(sys.argv) > 1:
-        single_cmd = b'$' + ' '.join(sys.argv[1:]).strip().encode() + b'\n'
+        args = sys.argv[1:]
+        if '--dev' in args:
+            args.remove('--dev')
+            dev_install = True
+        
+        if len(args) > 1:
+            single_cmd = b'$' + ' '.join(args).strip().encode() + b'\n'
+        
+    config = Config(dev_install=dev_install)
         
     if not single_cmd:
         print('Connecting to the democratic daemon on port ' + str(config.port) + '... ', end='')

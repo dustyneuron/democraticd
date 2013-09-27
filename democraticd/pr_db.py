@@ -27,10 +27,11 @@ def update_pull_request_list(old_pr_list, new_pr_list):
     return result_list
 
 
-class PullRequestDB:
+class PullRequestDB(object):
     def __init__(self, config):
         self.config = config
         self.repo_dict = {}
+        self.log = self.config.log
         
     def read_pull_requests(self, repo_list=None):
         if not repo_list:
@@ -88,7 +89,7 @@ class PullRequestDB:
                 elif pr.repo in module_set:
                     pr.repo_type = 'module'
                 else:
-                    print('Ignoring pull request for non-daemon repository "' + pr.repo + '"')
+                    self.log('Ignoring pull request for non-daemon repository "' + pr.repo + '"')
                     pr = None
                     
                 if pr:
@@ -106,7 +107,7 @@ class PullRequestDB:
         return (self.create_pull_requests(notifications), do_quit)
         
     def notify_voting_func(self, pr):
-        print('notify_voting_func ' + str(pr.key()))
+        self.log('notify_voting_func ' + str(pr.key()))
 
     def fill_pull_requests(self, github_api):            
         for repo in self.repos():
@@ -141,12 +142,12 @@ class PullRequestDB:
 
     def do_github_actions(self, github_api):
         
-        print('At top of daemon loop')
+        self.log('At top of daemon loop')
         for repo in self.config.get_repo_set():
-            print('Reading saved pull requests for "' + str(repo) + '"')
+            self.log('Reading saved pull requests for "' + str(repo) + '"')
             self.read_pull_requests(repo)
 
-        print('Getting new pull request notifications from GitHub API')
+        self.log('Getting new pull request notifications from GitHub API')
         new_repo_dict, do_quit = self.get_new_pull_requests(github_api)
         if do_quit:
             return
@@ -156,10 +157,10 @@ class PullRequestDB:
                     self.repo_dict[repo] = update_pull_request_list(self.repo_dict[repo], new_repo_dict[repo])
                     self.write_pull_requests(repo)
                 
-        print('Filling any pull requests if needed')
+        self.log('Filling any pull requests if needed')
         self.fill_pull_requests(github_api)
                         
-        print('Commenting on pull requests')
+        self.log('Commenting on pull requests')
         self.comment_on_pull_requests(github_api)
         
 

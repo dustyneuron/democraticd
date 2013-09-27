@@ -23,7 +23,7 @@ class GitHubError(Exception):
         return repr(self.value)
         
 
-class GitHubAPI:
+class GitHubAPI(object):
     json_methods = set(['PUT', 'POST'])
     base_url = 'api.github.com'
     

@@ -11,7 +11,7 @@ def prs_from_json(data):
     return [PullRequest.create_from_dict(dic) for dic in dict_list]
     
 
-class PullRequest:
+class PullRequest(object):
     states = {
         0: 'EMPTY',
         1: 'NEW',

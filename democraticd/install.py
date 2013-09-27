@@ -3,7 +3,7 @@ from __future__ import print_function, unicode_literals
 import json
 import sys
 
-class Installer:
+class Installer(object):
     def __init__(self):
         self.log('Installer() starting...')
         data = ''

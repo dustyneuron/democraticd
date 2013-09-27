@@ -9,7 +9,7 @@ def iso_8601(dt):
     return dt.replace(microsecond=0).isoformat() + 'Z'
 
 
-class DebugLevel:
+class DebugLevel(object):
     ESSENTIAL = 0
     INFO = 1
     DEBUG = 2

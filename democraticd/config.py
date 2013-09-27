@@ -9,6 +9,7 @@ import os.path
 import json
 import sysconfig
 import sys
+import datetime
 
 # TODO: file locking for safe IPC e.g. with build system
 # Sqlite would work, but a schema-less solution is best
@@ -18,17 +19,52 @@ import sys
 # OR: just pass the PR data via pipes etc to build/voting systems
 # - They don't need write access
 
-class Config:
-    def __init__(self, debug_level=DebugLevel.ESSENTIAL, mark_read = True, conf_dir = "/home/tom/.demod/"):
-        self.conf_dir = conf_dir
-        self.packages_dir = os.path.join(self.conf_dir, "packages")
-        self.debs_dir = os.path.join(self.conf_dir, "debs")
-        self.pull_requests_dir = os.path.join(self.conf_dir, "pull-requests")
-        self.json_extension = ".json"
-        self.port = 9999
+class Config(object):
+    def __init__(self, dev_install, debug_level=None, mark_read=None):
+        if dev_install:
+            self.conf_dir = os.path.expanduser('~/.democraticd/')
+            default_log = os.path.join(self.conf_dir, 'democraticd.log')
+        else:
+            self.conf_dir = '/etc/democraticd/'
+            default_log = '/var/log/democraticd.log'
+        
+        self.packages_dir = os.path.join(self.conf_dir, 'packages')
+        self.debs_dir = os.path.join(self.conf_dir, 'debs')
+        self.pull_requests_dir = os.path.join(self.conf_dir, 'pull-requests')
+        self.json_extension = '.json'
+        
+        filename = os.path.join(self.conf_dir, 'config.json')
+        if not os.path.exists(filename):
+            raise Exception('Not installed properly - ' + filename + ' does not exist')
+        with open(filename, 'rt') as f:
+            file_values = json.loads(f.read() or '{}')
+        
+        self.port = file_values.get('port', 9999)
+        
+        if debug_level == None:
+            debug_level = file_values.get('debug_level', DebugLevel.ESSENTIAL)
         self.debug_level = debug_level
+            
+        if mark_read == None:
+            mark_read = file_values.get('mark_read', True)
         self.mark_read = mark_read
+        
+        self.uid = file_values.get('uid', 1000)
+        self.gid = file_values.get('gid', 1000)
+        
+        self.log_filename = file_values.get('log_file', default_log)
 
+        self.python = 'python' + sysconfig.get_python_version()[0]
+        self.module_dir = '.'
+        if sys.argv[0]:
+            self.module_dir = os.path.join(os.path.dirname(sys.argv[0]), '..')
+        self.module_dir = os.path.abspath(self.module_dir)
+        
+        self.log('Loaded democraticd config OK')
+                
+    def create_missing_config(self):
+        if not os.path.exists(self.conf_dir):
+            raise Exception('Not installed properly - config dir ' + self.conf_dir + ' does not exist')
         if not os.path.exists(self.packages_dir):
             os.makedirs(self.packages_dir)
         if not os.path.exists(self.debs_dir):
@@ -36,11 +72,6 @@ class Config:
         if not os.path.exists(self.pull_requests_dir):
             os.makedirs(self.pull_requests_dir)
         
-        self.python = 'python' + sysconfig.get_python_version()[0]
-        self.module_dir = '.'
-        if sys.argv[0]:
-            self.module_dir = os.path.join(os.path.dirname(sys.argv[0]), '..')
-        self.module_dir = os.path.abspath(self.module_dir)
         
     def run_script(self, module_name, input_string, subprocess):
         cmd = [self.python, '-m', 'democraticd.' + module_name]
@@ -54,7 +85,8 @@ class Config:
                 
     def log(self, data, debug_level=DebugLevel.ESSENTIAL):
         if self.debug_level >= debug_level:
-            print(data)
+            print(str(datetime.datetime.now()) + ': ' + data)
+            sys.stdout.flush()
             
     def add_package(self, package_name, module_names=[]):
         filename = os.path.join(self.packages_dir, package_name + self.json_extension)
