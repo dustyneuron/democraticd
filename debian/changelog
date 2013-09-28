@@ -1,3 +1,12 @@
+python-democraticd (0.2.dev16) democraticd; urgency=low
+
+  [ Tom Scholl ]
+  * postinst and prerm scripts, first pass
+
+  [ Democratic Daemon ]
+
+ -- Tom Scholl <tom@dustyneuron.com>  Sat, 28 Sep 2013 04:30:13 +0100
+
 python-democraticd (0.2.dev15) democraticd; urgency=low
 
   [ Tom Scholl ]
