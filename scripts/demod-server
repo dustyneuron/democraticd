@@ -1,0 +1,4 @@
+#! /usr/bin/python
+
+from democraticd.server import start
+start()

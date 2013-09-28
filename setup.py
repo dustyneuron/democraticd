@@ -18,14 +18,10 @@ Debian packages.
         package_data = {
             '': ['README.md'],
             },
-        entry_points = {
-            'console_scripts': [
-                'demod-server = democraticd.server:start',
-                'demod = democraticd.client:start',
-                'demod-build = democraticd.build:start',
-                'demod-install = democraticd.install:start',
-                ],
-            },
+        scripts=[
+            'demod-server',
+            'demod',
+            ],
         classifiers=[
             'Development Status :: 2 - Pre-Alpha',
             'Environment :: Console',
