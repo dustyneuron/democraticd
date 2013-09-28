@@ -6,6 +6,7 @@ from democraticd.utils import get_os_id_str, drop_privs_temp, gain_privs
 import json
 import sys
 import os
+import os.path
 import subprocess
 
 class Installer(object):
@@ -34,7 +35,7 @@ class Installer(object):
         
         for repo, debs in debs_dict.items():
             for d in debs:
-                self.run(['dpkg', '-i', d])
+                self.run(['dpkg', '-i', os.path.join(self.config.get_deb_directory(repo), d)])
                 
         self.run(['apt-get', '-f', 'check'])
         
