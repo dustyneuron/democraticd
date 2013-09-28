@@ -19,8 +19,8 @@ Debian packages.
             '': ['README.md'],
             },
         scripts=[
-            'demod-server',
-            'demod',
+            'scripts/demod-server',
+            'scripts/demod',
             ],
         classifiers=[
             'Development Status :: 2 - Pre-Alpha',
