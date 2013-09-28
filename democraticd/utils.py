@@ -40,8 +40,8 @@ def get_os_id_str():
     return 'uid, gid, euid, egid = ' + ', '.join([str(x) for x in ids])
 
 def gain_privs(config):
-    os.setegid(self.config.gid)
-    os.seteuid(self.config.uid)
+    os.setegid(config.gid)
+    os.seteuid(config.uid)
 
 def drop_privs_temp(config):
     os.setegid(config.egid)
