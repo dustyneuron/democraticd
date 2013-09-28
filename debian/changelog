@@ -1,3 +1,13 @@
+python-democraticd (0.2.dev12) democraticd; urgency=low
+
+  [ Tom Scholl ]
+  * Set demod git username/email values
+  * Create scripts so argv works
+
+  [ tom ]
+
+ -- Tom Scholl <tom@dustyneuron.com>  Sat, 28 Sep 2013 03:00:34 +0100
+
 python-democraticd (0.2.dev11) democraticd; urgency=low
 
   [ Tom Scholl ]
