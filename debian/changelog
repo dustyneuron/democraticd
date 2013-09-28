@@ -1,3 +1,13 @@
+python-democraticd (0.2.dev13) democraticd; urgency=low
+
+  [ Tom Scholl ]
+  * Fix script paths
+  * Fixed git name/email commands
+
+  [ tom ]
+
+ -- Tom Scholl <tom@dustyneuron.com>  Sat, 28 Sep 2013 03:13:19 +0100
+
 python-democraticd (0.2.dev12) democraticd; urgency=low
 
   [ Tom Scholl ]
