@@ -153,4 +153,10 @@ class Config(object):
 
 def parse_cli_config():
     options, args = parse_cli_options()
-    return Config(dev_install=options['dev_install']), args
+    try:
+        config = Config(dev_install=options['dev_install'])
+    except:
+        options['dev_install'] = not options['dev_install']
+        config = Config(dev_install=options['dev_install'])
+        
+    return config, args
