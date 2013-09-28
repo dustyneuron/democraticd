@@ -1,3 +1,12 @@
+python-democraticd (0.2.dev9) democraticd; urgency=low
+
+  [ Tom Scholl ]
+  * Priv fixes for scripts
+
+  [ root ]
+
+ -- Tom Scholl <tom@dustyneuron.com>  Sat, 28 Sep 2013 02:11:47 +0100
+
 python-democraticd (0.2.dev8) democraticd; urgency=low
 
   [ Tom Scholl ]
