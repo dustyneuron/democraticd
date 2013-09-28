@@ -49,8 +49,10 @@ class Config(object):
             mark_read = file_values.get('mark_read', True)
         self.mark_read = mark_read
         
-        self.uid = file_values.get('uid', 1000)
-        self.gid = file_values.get('gid', 1000)
+        self.uid = file_values.get('uid', 0)
+        self.gid = file_values.get('gid', 0)
+        self.euid = file_values.get('euid', 1000)
+        self.egid = file_values.get('egid', 1000)
         
         self.log_filename = file_values.get('log_file', default_log)
 
@@ -59,8 +61,6 @@ class Config(object):
         if sys.argv[0]:
             self.module_dir = os.path.join(os.path.dirname(sys.argv[0]), '..')
         self.module_dir = os.path.abspath(self.module_dir)
-        
-        self.log('Loaded democraticd config OK')
                 
     def create_missing_config(self):
         if not os.path.exists(self.conf_dir):

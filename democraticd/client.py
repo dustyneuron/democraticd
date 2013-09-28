@@ -19,7 +19,7 @@ def start():
             args.remove('--dev')
             dev_install = True
         
-        if len(args) > 1:
+        if len(args) > 0:
             single_cmd = b'$' + ' '.join(args).strip().encode() + b'\n'
         
     config = Config(dev_install=dev_install)

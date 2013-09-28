@@ -17,6 +17,7 @@ from daemon import DaemonContext
 
 import functools
 import sys
+import os
 import os.path
 import re
     
@@ -49,6 +50,14 @@ class DemocraticDaemon(object):
         
     def start(self):
         self.log('Starting server on port ' + str(self.config.port))
+        ids = [os.getuid(), os.getgid(), os.geteuid(), os.getegid()]
+        self.log('uid, gid, euid, egid = ' + ', '.join([str(x) for x in ids]))
+        self.log('Dropping privileges... ')
+        os.setegid(self.config.egid)
+        os.seteuid(self.config.euid)
+        ids = [os.getuid(), os.getgid(), os.geteuid(), os.getegid()]
+        self.log('uid, gid, euid, egid = ' + ', '.join([str(x) for x in ids]))
+
         self.server.start()
         
         gevent.Greenlet.spawn(self.start_builds)
@@ -229,6 +238,7 @@ def start(**keywords):
     context.stdout = log_file
     context.stderr = log_file
 
+    print('Starting daemon, logging to ' + config.log_filename)
     with context:
         DemocraticDaemon(config, **args).start()
     
