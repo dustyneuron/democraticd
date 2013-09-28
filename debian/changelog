@@ -1,3 +1,13 @@
+python-democraticd (0.2.dev10) democraticd; urgency=low
+
+  [ Tom Scholl ]
+  * Drop privs properly!
+  * Stupid fix
+
+  [ tom ]
+
+ -- Tom Scholl <tom@dustyneuron.com>  Sat, 28 Sep 2013 02:20:05 +0100
+
 python-democraticd (0.2.dev9) democraticd; urgency=low
 
   [ Tom Scholl ]
