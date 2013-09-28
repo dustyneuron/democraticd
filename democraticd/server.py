@@ -3,7 +3,7 @@ from __future__ import print_function, unicode_literals
 import democraticd.config
 import democraticd.build
 import democraticd.pr_db
-from democraticd.utils import DebugLevel
+from democraticd.utils import DebugLevel, parse_cli_options
 from democraticd.pullrequest import prs_to_json
 
 import gevent
@@ -256,7 +256,5 @@ def debug(**keywords):
     start(**args)
 
 if __name__ == "__main__":
-    dev_install = False
-    if '--dev' in sys.argv:
-        dev_install = True
-    start(dev_install=dev_install)
+    options, args = parse_cli_options()
+    start(dev_install = options['dev_install'])

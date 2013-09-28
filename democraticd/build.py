@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 
-import democraticd.config
+from democraticd.config import parse_cli_config
 from democraticd.pullrequest import PullRequest, prs_from_json
 
 import time
@@ -40,18 +40,23 @@ class Builder(object):
         r = subprocess.check_output(args, stderr=sys.stderr)
         return r.decode()
             
-    def build(self, ):
+    def build(self):
         self.log('build started')
 
         data = ''
         for line in sys.stdin:
             data += line
-        pr = prs_from_json(data)[0]
-        for (k, v) in pr.__dict__.items():
-            self.log('build pr > ' + str(k) + ' = ' + str(v))
+        for pr in prs_from_json(data):
+            self.build_pr(pr)
+            
+        self.log('build finished')
         
-        config = democraticd.config.Config()            
-        github_config = config.get_github_config()
+    def build_pr(self, pr):
+        for (k, v) in pr.__dict__.items():
+            self.log('build_pr > ' + str(k) + ' = ' + str(v))
+        
+        self.config, args = parse_cli_config()
+        github_config = self.config.get_github_config()
             
         self.working_dir = tempfile.mkdtemp()
         self.log('Working directory is ' + self.working_dir)
@@ -95,7 +100,7 @@ class Builder(object):
         for f in files:
             if re.match('.*\.deb$', f):
                 src = os.path.join(self.working_dir, f)
-                dest = os.path.join(config.get_deb_directory(pr.repo), f)
+                dest = os.path.join(self.config.get_deb_directory(pr.repo), f)
                 self.log('Copying ' + src + ' to ' + dest)
                 shutil.copy(src, dest)
                 output_data[pr.repo].append(f)

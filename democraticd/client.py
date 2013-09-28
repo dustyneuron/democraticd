@@ -5,7 +5,7 @@ import gevent.socket as socket
 import gevent.event
 from gevent.fileobject import FileObject
 
-from democraticd.config import Config
+from democraticd.config import parse_cli_config
 
 import sys
 import re
@@ -13,17 +13,11 @@ import re
 def start():    
     dev_install = False
     single_cmd = None
-    if len(sys.argv) > 1:
-        args = sys.argv[1:]
-        if '--dev' in args:
-            args.remove('--dev')
-            dev_install = True
-        
-        if len(args) > 0:
-            single_cmd = b'$' + ' '.join(args).strip().encode() + b'\n'
-        
-    config = Config(dev_install=dev_install)
-        
+    
+    config, args = parse_cli_config()
+    if len(args) > 0:
+        single_cmd = b'$' + ' '.join(args).strip().encode() + b'\n'
+    
     if not single_cmd:
         print('Connecting to the democratic daemon on port ' + str(config.port) + '... ', end='')
     try:

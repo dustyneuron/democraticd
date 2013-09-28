@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 from democraticd import github_api
-from democraticd.utils import DebugLevel
+from democraticd.utils import DebugLevel, parse_cli_options, get_common_cli_argv
 from democraticd.pullrequest import prs_to_json
 
 import os
@@ -75,12 +75,11 @@ class Config(object):
         
     def run_script(self, module_name, input_string, subprocess):
         cmd = [self.python, '-m', 'democraticd.' + module_name]
+        for arg in get_common_cli_argv():
+            cmd.append(arg)
         self.log('Popen ' + ' '.join(cmd))
-        p = subprocess.Popen(cmd, cwd=self.module_dir, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stderr)
+        p = subprocess.Popen(cmd, cwd=self.module_dir, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stdout)
         data, _ = p.communicate(input_string.encode())
-        #p.stdin.write(input_string.encode())
-        #p.stdin.close()
-        #p.wait()
         return p.returncode, data
                 
     def log(self, data, debug_level=DebugLevel.ESSENTIAL):
@@ -149,3 +148,6 @@ class Config(object):
         return d
         
 
+def parse_cli_config():
+    options, args = parse_cli_options()
+    return Config(dev_install=options['dev_install']), args
