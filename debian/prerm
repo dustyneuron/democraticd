@@ -1,0 +1,41 @@
+#! /usr/bin/python
+
+from __future__ import print_function, unicode_literals
+
+import sys
+import os
+import subprocess
+import time
+
+def stop():
+    devnull = open(os.devnull)
+    r = subprocess.call(['demod', 'stop'], stderr=devnull)
+    if r != 0:
+        return
+
+    sys.stdout.write('Waiting for demod to stop...')
+    wait_time = 10
+    running = True
+    for x in range(wait_time):
+        time.sleep(1)
+        sys.stdout.write('.')
+        r = subprocess.call(['demod', 'list'])
+        if r != 0:
+            running = False
+            break
+            
+    if running:
+        raise Exception('demod did not stop within ' + str(wait_time) + ' seconds')
+    print('ok')
+
+
+if __name__ == "__main__":
+    command = sys.argv[1]
+    version = None
+    if len(sys.argv) > 2:
+        version = sys.argv[2]
+    
+    if command == 'remove':
+        stop()
+        
+    sys.exit(0)

@@ -219,12 +219,19 @@ def start(**keywords):
         debug_level = None,
         )
     args.update(keywords)
-
-    config = democraticd.config.Config(
-        dev_install = args['dev_install'],
-        debug_level = args['debug_level'],
-        mark_read = args['mark_read'],
-        )
+    try:
+        config = democraticd.config.Config(
+            dev_install = args['dev_install'],
+            debug_level = args['debug_level'],
+            mark_read = args['mark_read'],
+            )
+    except:
+        args['dev_install'] = not args['dev_install']
+        config = democraticd.config.Config(
+            dev_install = args['dev_install'],
+            debug_level = args['debug_level'],
+            mark_read = args['mark_read'],
+            )            
     del args['dev_install']
     del args['debug_level']
     del args['mark_read']
