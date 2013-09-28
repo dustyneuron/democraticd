@@ -54,6 +54,9 @@ class Config(object):
         self.euid = file_values.get('euid', 1000)
         self.egid = file_values.get('egid', 1000)
         
+        self.git_name = file_values.get('git_name', 'Democratic Daemon')
+        self.git_email = file_values.get('git_email', 'demod@dustyneuron.com')
+        
         self.log_filename = file_values.get('log_file', default_log)
 
         self.python = 'python' + sysconfig.get_python_version()[0]
@@ -137,7 +140,7 @@ class Config(object):
     def create_github_api(self, quit_event, make_comments=True):
         config = self.get_github_config()
         return github_api.GitHubAPI(config['username'], config['password'], quit_event, self.log, make_comments)
-
+        
     def get_pull_requests_filename(self, repo):
         return os.path.join(self.pull_requests_dir, repo + self.json_extension)
 
