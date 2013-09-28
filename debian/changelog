@@ -1,3 +1,12 @@
+python-democraticd (0.2.dev11) democraticd; urgency=low
+
+  [ Tom Scholl ]
+  * Installer finds deb directory
+
+  [ tom ]
+
+ -- Tom Scholl <tom@dustyneuron.com>  Sat, 28 Sep 2013 02:26:49 +0100
+
 python-democraticd (0.2.dev10) democraticd; urgency=low
 
   [ Tom Scholl ]
