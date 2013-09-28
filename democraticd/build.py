@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 
 from democraticd.config import parse_cli_config
 from democraticd.pullrequest import PullRequest, prs_from_json
+from democraticd.utils import get_os_id_str, drop_privs_perm
 
 import time
 import sys
@@ -42,6 +43,13 @@ class Builder(object):
             
     def build(self):
         self.log('build started')
+        
+        self.config, args = parse_cli_config()
+        
+        self.log(get_os_id_str())
+        self.log('Dropping privileges (irreversible)... ')
+        drop_privs_perm(self.config)
+        self.log(get_os_id_str())
 
         data = ''
         for line in sys.stdin:
@@ -55,7 +63,6 @@ class Builder(object):
         for (k, v) in pr.__dict__.items():
             self.log('build_pr > ' + str(k) + ' = ' + str(v))
         
-        self.config, args = parse_cli_config()
         github_config = self.config.get_github_config()
             
         self.working_dir = tempfile.mkdtemp()

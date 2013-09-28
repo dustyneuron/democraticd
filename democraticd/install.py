@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 from democraticd.config import parse_cli_config
+from democraticd.utils import get_os_id_str, drop_privs_temp, gain_privs
 
 import json
 import sys
@@ -12,6 +13,11 @@ class Installer(object):
         self.log('Installer() starting...')
         
         self.config, args = parse_cli_config()
+                
+        self.log(get_os_id_str())
+        self.log('Dropping privileges (reversible)... ')
+        drop_privs_temp(self.config)
+        self.log(get_os_id_str())
         
         data = ''
         for line in sys.stdin:
@@ -21,11 +27,10 @@ class Installer(object):
             for d in debs:
                 self.log('deb to install: ' + repo + '/' + d)
 
-        self.log_ids()
+        self.log(get_os_id_str())
         self.log('Gaining privileges...')
-        os.setegid(self.config.gid)
-        os.seteuid(self.config.uid)
-        self.log_ids()
+        gain_privs(self.config)
+        self.log(get_os_id_str())
         
         for repo, debs in debs_dict.items():
             for d in debs:
@@ -33,11 +38,6 @@ class Installer(object):
                 
         self.run(['apt-get', '-f', 'check'])
         
-        self.log('Dropping privileges...')
-        os.setegid(self.config.egid)
-        os.seteuid(self.config.euid)
-        self.log_ids()
-
         self.log('Installer() finished')
         
     def run(self, args):
@@ -46,10 +46,6 @@ class Installer(object):
         r = subprocess.call(args, stderr=sys.stderr, stdout=sys.stderr)
         if r != 0:
             raise Exception('"' + cmd + '" returned ' + str(r))
-
-    def log_ids(self):
-        ids = [os.getuid(), os.getgid(), os.geteuid(), os.getegid()]
-        self.log('uid, gid, euid, egid = ' + ', '.join([str(x) for x in ids]))
 
     def log(self, s):
         sys.stderr.write(s + '\n')

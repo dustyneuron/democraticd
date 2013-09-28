@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 
 import datetime
 import sys
+import os
 
 def iso_8601(dt):
     if dt.tzinfo:
@@ -34,3 +35,18 @@ def get_common_cli_argv():
         return ['--dev']
     return []
     
+def get_os_id_str():
+    ids = [os.getuid(), os.getgid(), os.geteuid(), os.getegid()]
+    return 'uid, gid, euid, egid = ' + ', '.join([str(x) for x in ids])
+
+def drop_privs_temp(config):
+    os.setegid(config.egid)
+    os.seteuid(config.euid)
+    
+def drop_privs_perm(config):
+    os.setgid(config.egid)
+    os.setuid(config.euid)
+
+def gain_privs(config):
+    os.setegid(self.config.gid)
+    os.seteuid(self.config.uid)

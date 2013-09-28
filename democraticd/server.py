@@ -4,6 +4,7 @@ import democraticd.config
 import democraticd.build
 import democraticd.pr_db
 from democraticd.utils import DebugLevel, parse_cli_options
+from democraticd.utils import get_os_id_str, drop_privs_temp
 from democraticd.pullrequest import prs_to_json
 
 import gevent
@@ -50,13 +51,11 @@ class DemocraticDaemon(object):
         
     def start(self):
         self.log('Starting server on port ' + str(self.config.port))
-        ids = [os.getuid(), os.getgid(), os.geteuid(), os.getegid()]
-        self.log('uid, gid, euid, egid = ' + ', '.join([str(x) for x in ids]))
-        self.log('Dropping privileges... ')
-        os.setegid(self.config.egid)
-        os.seteuid(self.config.euid)
-        ids = [os.getuid(), os.getgid(), os.geteuid(), os.getegid()]
-        self.log('uid, gid, euid, egid = ' + ', '.join([str(x) for x in ids]))
+        
+        self.log(get_os_id_str())
+        self.log('Dropping privileges (reversible)... ')
+        drop_privs_temp(self.config)
+        self.log(get_os_id_str())
 
         self.server.start()
         
