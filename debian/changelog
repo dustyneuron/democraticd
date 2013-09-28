@@ -1,3 +1,15 @@
+python-democraticd (0.2.dev8) democraticd; urgency=low
+
+  [ Tom Scholl ]
+  * Adding python-daemon to manage uids etc
+  * --dev for ~ or /etc switching, log file, config file
+  * seteuid for dropping privs
+  * Install & build cli options
+
+  [ root ]
+
+ -- Tom Scholl <tom@dustyneuron.com>  Sat, 28 Sep 2013 01:55:29 +0100
+
 python-democraticd (0.2.dev7) democraticd; urgency=low
 
   * Debug statements for install
