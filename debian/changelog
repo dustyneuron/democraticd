@@ -1,3 +1,12 @@
+python-democraticd (0.2.dev14) democraticd; urgency=low
+
+  [ Tom Scholl ]
+  * Try and use the git name/email please...
+
+  [ Democratic Daemon ]
+
+ -- Tom Scholl <tom@dustyneuron.com>  Sat, 28 Sep 2013 03:27:10 +0100
+
 python-democraticd (0.2.dev13) democraticd; urgency=low
 
   [ Tom Scholl ]
