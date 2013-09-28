@@ -74,7 +74,8 @@ class Builder(object):
             self.run(['git', 'clone', 'https://github.com/' + github_config['username'] + '/' + pr.repo + '.git', pr.repo])
             os.chdir(os.path.join(self.working_dir, pr.repo))
             
-            self.run(['git', 'config', '--local', '--replace-all', 'user.name', self.config.git_name, 'user.email', self.config.git_email])
+            self.run(['git', 'config', '--local', '--replace-all', 'user.name', self.config.git_name])
+            self.run(['git', 'config', '--local', '--replace-all', 'user.email', self.config.git_email])
             
             last_commit = self.get(['git', 'log', '-n', '1', '--pretty=format:%H']).strip()
             #last_version = self.get(['git', 'tag', '--contains', pr.sha]).strip()[len('debian/'):]
