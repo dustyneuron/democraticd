@@ -1,3 +1,7 @@
+### TODO
+Check out https://github.com/agoraciudadana/agora-ciudadana -  django liquid voting, in production use!
+Also http://mediagoblin.org/ is sort of similar, and also Django based
+
 ### A democratic internet service
 
 - Anyone can propose a change to the live server code
